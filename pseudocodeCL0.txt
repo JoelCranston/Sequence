@@ -1,0 +1,9 @@
+Sequ pseudocode for compliance level 0
+Joel Cranston
+
+read in the args from the system 
+check to make sure that there are two args, if not error with message.
+check to make sure that they are integers, if not error with message.
+exit without error if arg 1 is not less then or equal to arg 2.
+create sequence from start and end values inclusive.
+print sequence with each element on a new line.
