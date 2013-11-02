@@ -9,21 +9,33 @@ __author__="Joel Cranston"
 __date__ ="$Oct 18, 2013 11:46:17 AM$"
 
 import argparse
+
+def main():
+    args = parseArgs()
+    seq = createSeq(args)
+    printSeq(seq)  
+    #print(args.first)
+    #print(args.increment)
+    #print(args.last)
+    
     
 def parseArgs():
     """
     Reads the command line arguements and returns a Namespace object
-    containing integers startNum and endNum.
+    containing integers first and last.
     """
     #http://docs.python.org/dev/library/argparse.html
-    parser = argparse.ArgumentParser(description='Returns the inclusive sequence between two integers')
-    parser.add_argument('--version', action='version', version='%(prog)s "Compliance Level 0"')
-    parser.add_argument('startNum',type=int, nargs=1, help='a starting integer')
-    parser.add_argument('endNum',type=int, nargs=1, help='an ending integer')  
-    args=parser.parse_args()
-    #convert lists to int
-    args.startNum = args.startNum[0]
-    args.endNum = args.endNum[0]
+    parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
+    parser.add_argument('-v','--version', action='version', version='%(prog)s "Compliance Level 1"')
+    #parser.add_argument('-f', nargs=1, help='printf type format string')
+    #parser.add_argument('--format=',nargs=1, help='printf type format string')
+    #parser.add_argument('-s', nargs=1, help='charactor to separate numbers')
+    #parser.add_argument('--separator=')
+    parser.add_argument('-w','--equal-width', dest='w', action='append_const', const='w', help='Pad number with zeros')
+    parser.add_argument('first', nargs='?', default='1', help='starting value')
+    parser.add_argument('increment', nargs='?',  default='1', help='increment')
+    parser.add_argument('last', help='ending value')  
+    args=parser.parse_args('1 2 3'.split())
     return args
 
 def createSeq(numList):
@@ -32,8 +44,8 @@ def createSeq(numList):
     Returns an empty set if start number is greater then end number.
     """
     numSeq = []
-    if numList.startNum <= numList.endNum:
-        numSeq = [x for x in range(numList.startNum, numList.endNum + 1)]
+    if numList.first <= numList.last:
+        numSeq = [x for x in range(numList.first, numList.last + 1)]
     #else:
     #   print("DEBUG - invalid input")
     return numSeq
@@ -48,6 +60,5 @@ def printSeq(lst):
         print(i)
       
 if __name__ == "__main__":
-    args = parseArgs()
-    seq = createSeq(args)
-    printSeq(seq)   
+     main()
+     
