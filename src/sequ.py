@@ -13,9 +13,11 @@ import argparse
 
 def main():
     args = parseArgs()
-    seq = createSeq(args)
-    printSeq(seq) 
-   
+    seqIterator = frange(args.first,args.last + args.increment, args.increment )
+    args.format = processFormatString(args.format)
+    printSeq(seqIterator,args) 
+    print('DEBUG - ',args)
+    
     
 def parseArgs():
     """
@@ -28,21 +30,24 @@ def parseArgs():
     #http://docs.python.org/dev/library/argparse.html
     parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
     parser.add_argument('-v','--version', action='version', version='%(prog)s "Compliance Level 1"')
-    #parser.add_argument('-f', nargs=1, help='printf type format string')
-    #parser.add_argument('--format=',nargs=1, help='printf type format string')
-    #parser.add_argument('-s', nargs=1, help='charactor to separate numbers')
-    #parser.add_argument('--separator=')
-    parser.add_argument('-w','--equal-width', dest='w', action='append_const', const='w', help='Pad number with zeros')
+    parser.add_argument('-f','--format=',metavar='FORMAT',dest='format', help='use printf style floating-point FORMAT')
+    parser.add_argument('-s', '--separator=',metavar='STRING',dest='seporator', help='use STRING to separate numbers')
+    parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true',help='equalize width by padding with leading zeros')
     parser.add_argument('first', nargs='?', type=numberType, default='1', help='starting value')
     parser.add_argument('increment', nargs='?', type=numberType, default='1', help='increment')
-    parser.add_argument('last', type=numberType, help='ending value')  
-    args=parser.parse_args('1 1 10'.split())
+    parser.add_argument('last', type=numberType, help='ending value') 
+    #args=parser.parse_args('--f %#f 1 1 10'.split())
+    args=parser.parse_args()
     
     print('DEBUG - first: ',type(args.first),args.first)
     print('DEBUG - increment: ',type(args.increment),args.increment)
     print('DEBUG - last: ',type(args.last),args.last)
+    print('DEBUG - format: ',type(args.format),args.format)
+    print('DEBUG - seporator: ',type(args.seporator),args.seporator)
+    print('DEBUG - equal width: ',type(args.equalWidth),args.equalWidth)
     return args
 
+# this function is used by argparse 
 def numberType(argString):
     '''
     Takes a string and returns a float if there is a decimal point, otherwise returns a integer. 
@@ -51,24 +56,31 @@ def numberType(argString):
     num = float(argString) if '.' in argString else int(argString)    
     return num
 
-def createSeq(args):
+# This function checks the format string and edits it if nessasary
+def processFormatString(formatStr):
+    #insert code here.
+    return formatStr
+    
+def printSeq(iter,args):
     """
-    Returns a list containing the sequence.
-    Returns an empty set if start number is greater then end number.
+    Accepts a iterator and Namespace object.
+    Prints each element seporated by seporator char and 
+    displayed with printf style format string.
     """
-     
-    numSeq = list(frange(args.first,args.last + args.increment, args.increment ))
-    return numSeq
-
-
-def printSeq(lst):
-    """
-    Accepts one argument [lst] and prints the sequence of values in lst 
-    with each element seporated by a newline
-    """
-    for i in lst:
-        print(i)
- 
+    precision = 15 #default floating point precision.
+    
+    #if no format specified or equal width flag use the default handling
+    if ~args.equalWidth and args.format == None:
+        for i in iter:
+            print(round(i,precision))#add end=seporator
+    else:
+        #test for precision?
+        for i in iter:
+            print(args.format % round(i,precision))#add end=seporator
+    
+    if args.seporator != '/n':
+        print()
+        
       
 #http://code.activestate.com/recipes/66472/
 def frange(start, stop = None, step = 1):
@@ -76,7 +88,8 @@ def frange(start, stop = None, step = 1):
     range [start, stop) with step size step
 
     frange([start,] stop [, step ])"""
-    assert step > 0
+    #avoid devide by zero
+    assert step != 0
     if stop is None:
         for x in range(int(ceil(start))):
             yield x
