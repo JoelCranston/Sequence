@@ -13,10 +13,13 @@ import argparse
 
 def main():
     args = parseArgs()
+    #print('DEBUG - ',args)
     seqIterator = frange(args.first,args.last + args.increment, args.increment )
     args.format = processFormatString(args.format)
+    args.separator = processSeparator(args.separator)
+    #print('DEBUG - ',args)
     printSeq(seqIterator,args) 
-     
+    
 def parseArgs():
     """
     Reads the command line arguements and returns a Namespace object
@@ -24,25 +27,20 @@ def parseArgs():
     first 
     last
     increment
+    format
+    seporator
+    equalWidth
     """
     #http://docs.python.org/dev/library/argparse.html
     parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
     parser.add_argument('-v','--version', action='version', version='%(prog)s "Compliance Level 1"')
     parser.add_argument('-f','--format=',metavar='FORMAT',dest='format', help='use printf style floating-point FORMAT')
-    parser.add_argument('-s', '--separator=',metavar='STRING',dest='separator', help='use STRING to separate numbers')
+    parser.add_argument('-s','--separator=',metavar='STRING',dest='separator', help='use STRING to separate numbers')
     parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true',help='equalize width by padding with leading zeros')
     parser.add_argument('first', nargs='?', type=numberType, default='1', help='starting value')
     parser.add_argument('increment', nargs='?', type=numberType, default='1', help='increment')
     parser.add_argument('last', type=numberType, help='ending value') 
-    #args=parser.parse_args(' 1 0 -1'.split())
-    #args=parser.parse_args('-s "  " 0 1 13'.split())
     args=parser.parse_args()
-    print('DEBUG - first: ',type(args.first),args.first)
-    print('DEBUG - increment: ',type(args.increment),args.increment)
-    print('DEBUG - last: ',type(args.last),args.last)
-    print('DEBUG - format: ',type(args.format),args.format)
-    print('DEBUG - separator: ',type(args.separator),args.separator)
-    print('DEBUG - equal width: ',type(args.equalWidth),args.equalWidth)
     return args
 
 # this function is used by argparse 
@@ -54,8 +52,21 @@ def numberType(argString):
     num = float(argString) if '.' in argString else int(argString)    
     return num
 
+#converts from doubble backslash to escape char.
+def processSeparator(separator):
+    if separator != None:
+        separator = separator.replace("\\n",'\n')
+        separator = separator.replace("\\t",'\t')
+        separator = separator.replace("\\r",'\r')
+        separator = separator.replace("\\s",' ')
+        separator = separator.replace("\\'","'")
+        separator = separator.replace("\\v",'\v')
+        separator = separator.replace("\\f",'\f')
+    return separator
+
 # This function checks the format string and edits it if nessasary
 def processFormatString(formatStr):
+    
     #insert code here.
     return formatStr
     
@@ -87,7 +98,6 @@ def printSeq(iter,args):
     if args.separator != None:
         print('\b')
         
-    print('DEBUG - ',args)
 # returns the max lengh of a number between first and last by increments.
 def getNumLength(first,increment,last):
     # if the increment is a float then make sure first and last are tested as floats.
