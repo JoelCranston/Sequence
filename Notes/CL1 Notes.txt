@@ -39,3 +39,17 @@ need to change printseq to use an iterator rather then a list.
 New issues;
 Format strings using A, are not functional. Unsure of effects of #,0,- in format string.
 
+Notes;
+Moved rounding of floats to the number generator
+set frange to round floats ot 14 digits to avoid rounding errors.
+can't duplicate negative issue zero anymore. Assuming its fixed.
+
+
+New issues:
+Equal width pads zeros to the front of the number after the sign even when it would be better to place a zero after. example -00.0 -00.1, -0.11, -0.12
+Some escape sequences do not work in -s string, but then they don't work in seq either. 
+    \? prints \?
+    \v,\t,\r,\n,\f gets ignored and uses value of first as separator.
+    \b actualy inserts a backspace removing the last digit of each num. and messes up further on final line, 2 backspaces.
+    \a does not really do anything.
+ " " fails, but prints the nums seporated by a space in seq        
