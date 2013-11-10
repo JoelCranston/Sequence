@@ -9,15 +9,19 @@ __author__="Joel Cranston"
 __date__ ="$2013$"
 
 import argparse
-#import math
+import re
 
 def main():
     args = parseArgs()
-    #print('DEBUG - ',args)
+    # Check the format string if it is supplied 
+    if args.format != None:
+        args.format = checkFormatString(args.format)
+        # Exit if returned string is None.
+        if args.format == None:
+            return
+    if args.separator != None:
+        args.separator = processSeparator(args.separator)
     seqIterator = frange(args.first,args.last + args.increment, args.increment )
-    args.format = processFormatString(args.format)
-    args.separator = processSeparator(args.separator)
-    #print('DEBUG - ',args)
     printSeq(seqIterator,args) 
     
 def parseArgs():
@@ -54,21 +58,26 @@ def numberType(argString):
 
 #converts from doubble backslash to escape char.
 def processSeparator(separator):
-    if separator != None:
-        separator = separator.replace("\\n",'\n')
-        separator = separator.replace("\\t",'\t')
-        separator = separator.replace("\\r",'\r')
-        separator = separator.replace("\\s",' ')
-        separator = separator.replace("\\'","'")
-        separator = separator.replace("\\v",'\v')
-        separator = separator.replace("\\f",'\f')
+    separator = separator.replace("\\n",'\n')
+    separator = separator.replace("\\t",'\t')
+    separator = separator.replace("\\r",'\r')
+    separator = separator.replace("\\s",' ')
+    separator = separator.replace("\\'","'")
+    separator = separator.replace("\\v",'\v')
+    separator = separator.replace("\\f",'\f')
     return separator
-
+ 
 # This function checks the format string and edits it if nessasary
-def processFormatString(formatStr):
-    
-    #insert code here.
-    return formatStr
+def checkFormatString(formatStr):
+
+    match = re.search('%[+0#-]*(\d*)(\.\d*)?[FfGgEe]',formatStr)
+    # if it matches the above regex then it can be passed to print safely
+    if match is not None: 
+        print('DEBUG - ',match.group())
+        return formatStr
+    else:
+        print("format string <%s> is not valid" % formatStr)
+        return None
     
 def printSeq(iter,args):
     """
@@ -77,12 +86,10 @@ def printSeq(iter,args):
     displayed with printf style format string.
     """
     
-    #args.separater = '\n'
     # numlength defaults to 1 if equalwidth is true set to max of first,last    
-    # There is a Bug in Corutils seq for {-w -10 .1 10}, it does not pad correctly
     numLength=1
     if args.equalWidth:
-        numLength = getNumLength(args.first,args.increment,args.last)
+        numLength = getMaxNumLength(args.first,args.increment,args.last)
 
     #zfill pads zeros to the front after the sign
     #if no format specified use the default handling        
@@ -96,17 +103,20 @@ def printSeq(iter,args):
     
     # print a backspace and newline if specifing a custom seporator.
     if args.separator != None:
-        print('\b')
+        print('\b ')
         
-# returns the max lengh of a number between first and last by increments.
-def getNumLength(first,increment,last):
-    # if the increment is a float then make sure first and last are tested as floats.
+# returns the max lengh of a number between first and last by increment.
+def getMaxNumLength(first,increment,last):
+    lenInc = len(str(increment))
+    lenFI = len(str(first+increment))
+    lenLI = len(str(last-increment))
     if type(increment) == float:
-        numLength = max(len(str(float(first+increment))),len(str(float(last))),len(str(increment)))
+        lenFirst = len(str(float(first)))
+        lenLast = len(str(float(last)))
     else:
-        numLength = max(len(str(first)),len(str(last)))
-    print('DEBUG - numlength = ',numLength)
-    return numLength
+        lenFirst = len(str(first))
+        lenLast = len(str(last))
+    return max(lenInc,lenLast,lenFirst,lenFI,lenLI)
 
 #http://code.activestate.com/recipes/66472/
 def frange(start, stop = None, step = 1):
