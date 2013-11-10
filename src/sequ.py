@@ -70,7 +70,7 @@ def processSeparator(separator):
 # This function checks the format string and edits it if nessasary
 def checkFormatString(formatStr):
 
-    match = re.search('%[+0#-]*(\d*)(\.\d*)?[FfGgEe]',formatStr)
+    match = re.search('\w*%[+0#-]*(\d*)(\.\d*)?[FfGgEe]\w*',formatStr)
     # if it matches the above regex then it can be passed to print safely
     if match is not None: 
         print('DEBUG - ',match.group())

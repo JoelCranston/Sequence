@@ -1,4 +1,5 @@
 Joel Cranston
+https://jcrans2@projects.cecs.pdx.edu/git/masseycs300-jcrans2
 Notes for CL1
 
 Need to:
