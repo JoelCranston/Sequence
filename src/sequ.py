@@ -17,7 +17,7 @@ def main():
     if args.format != None:
         args.format = checkFormatString(args.format)
         # Exit if returned string is None.
-        if args.format == None:
+        if args.format == None:            
             return
     if args.separator != None:
         args.separator = processSeparator(args.separator)
@@ -56,15 +56,17 @@ def numberType(argString):
     num = float(argString) if '.' in argString else int(argString)    
     return num
 
-#converts from doubble backslash to escape char.
+#converts from double backslash to escape char.
 def processSeparator(separator):
-    separator = separator.replace("\\n",'\n')
-    separator = separator.replace("\\t",'\t')
-    separator = separator.replace("\\r",'\r')
-    separator = separator.replace("\\s",' ')
-    separator = separator.replace("\\'","'")
-    separator = separator.replace("\\v",'\v')
-    separator = separator.replace("\\f",'\f')
+    separator = separator.replace(r"\\",'\\')
+    separator = separator.replace(r"\n",'\n')
+    separator = separator.replace(r"\t",'\t')
+    separator = separator.replace(r"\r",'\r')
+    separator = separator.replace(r"\v",'\v')
+    separator = separator.replace(r"\f",'\f')
+    separator = separator.replace(r"\s",' ')
+    separator = separator.replace(r"\'","'")
+    
     return separator
  
 # This function checks the format string and edits it if nessasary
@@ -73,7 +75,7 @@ def checkFormatString(formatStr):
     match = re.search('\w*%[+0#-]*(\d*)(\.\d*)?[FfGgEe]\w*',formatStr)
     # if it matches the above regex then it can be passed to print safely
     if match is not None: 
-        print('DEBUG - ',match.group())
+        #print('DEBUG - ',match.group())
         return formatStr
     else:
         print("format string <%s> is not valid" % formatStr)
@@ -101,8 +103,8 @@ def printSeq(iter,args):
         for i in iter:
             print((args.format % i),end=args.separator)
     
-    # print a backspace and newline if specifing a custom seporator.
-    if args.separator != None:
+    # print a backspace and newline if specifing a custom seporator that does not end with a newline.
+    if args.separator[-1] != '\n':
         print('\b ')
         
 # returns the max lengh of a number between first and last by increment.
