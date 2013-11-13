@@ -104,8 +104,9 @@ def printSeq(iter,args):
             print((args.format % i),end=args.separator)
     
     # print a backspace and newline if specifing a custom seporator that does not end with a newline.
-    if args.separator[-1] != '\n':
-        print('\b ')
+    if args.separator is not None:
+        if args.separator[-1] !='\n':
+            print('\b ')
         
 # returns the max lengh of a number between first and last by increment.
 def getMaxNumLength(first,increment,last):
