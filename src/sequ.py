@@ -13,28 +13,19 @@ import re
 
 def main():
     args = parseArgs()
-    # Check the format string if it is supplied 
+    # Check the format string if it is supplied, returns None if invalid.
     if args.format != None:
         args.format = checkFormatString(args.format)
-        # Exit if returned string is None.
         if args.format == None:            
             return
     if args.separator != None:
         args.separator = processSeparator(args.separator)
-    seqIterator = frange(args.first,args.last + args.increment, args.increment )
+    seqIterator = frange(args.first, args.increment, args.last + args.increment)
     printSeq(seqIterator,args) 
-    
+
+
+# Parces the command line arguments and returns a Namespace object with the options.   
 def parseArgs():
-    """
-    Reads the command line arguements and returns a Namespace object
-    containing the command line arguments:
-    first 
-    last
-    increment
-    format
-    seporator
-    equalWidth
-    """
     #http://docs.python.org/dev/library/argparse.html
     parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
     parser.add_argument('-v','--version', action='version', version='%(prog)s "Compliance Level 1"')
@@ -47,7 +38,8 @@ def parseArgs():
     args=parser.parse_args()
     return args
 
-# this function is used by argparse 
+
+# this function is only used by argparse to deturmine if the numbers are valid ints or floats.
 def numberType(argString):
     '''
     Takes a string and returns a float if there is a decimal point, otherwise returns a integer. 
@@ -55,6 +47,7 @@ def numberType(argString):
     #http://stackoverflow.com/questions/379906/parse-string-to-float-or-int
     num = float(argString) if '.' in argString else int(argString)    
     return num
+
 
 #converts from double backslash to escape char.
 def processSeparator(separator):
@@ -65,9 +58,9 @@ def processSeparator(separator):
     separator = separator.replace(r"\v",'\v')
     separator = separator.replace(r"\f",'\f')
     separator = separator.replace(r"\s",' ')
-    separator = separator.replace(r"\'","'")
-    
+    separator = separator.replace(r"\'","'") 
     return separator
+ 
  
 # This function checks the format string and edits it if nessasary
 def checkFormatString(formatStr):
@@ -80,6 +73,7 @@ def checkFormatString(formatStr):
     else:
         print("format string <%s> is not valid" % formatStr)
         return None
+  
     
 def printSeq(iter,args):
     """
@@ -87,26 +81,30 @@ def printSeq(iter,args):
     Prints each element seporated by seporator char and 
     displayed with printf style format string.
     """
-    
-    # numlength defaults to 1 if equalwidth is true set to max of first,last    
+      
     numLength=1
     if args.equalWidth:
-        numLength = getMaxNumLength(args.first,args.increment,args.last)
+        numLength = getMaxNumLength(args.first,args.last,args.increment)
 
     #zfill pads zeros to the front after the sign
     #if no format specified use the default handling        
     if args.format == None:
         for i in iter:
             print(str(i).zfill(numLength),end=args.separator)
-    else:
-        #equal length strings are not attempted if format string is provided.
+    
+    #equal length strings are not attempted if format string is provided.
+    else:    
         for i in iter:
             print((args.format % i),end=args.separator)
     
-    # print a backspace and newline if specifing a custom seporator that does not end with a newline.
+    # print a backspace and newline if a custom seporator is used that does not end with a newline.
     if args.separator is not None:
-        if args.separator[-1] !='\n':
-            print('\b ')
+        if len(args.separator) is 0:
+            print()
+        else:
+            if args.separator[-1] !='\n':
+                print('\b ')
+        
         
 # returns the max lengh of a number between first and last by increment.
 def getMaxNumLength(first,increment,last):
@@ -121,8 +119,10 @@ def getMaxNumLength(first,increment,last):
         lenLast = len(str(last))
     return max(lenInc,lenLast,lenFirst,lenFI,lenLI)
 
+
+
 #http://code.activestate.com/recipes/66472/
-def frange(start, stop = None, step = 1):
+def frange(start, step = 1, stop = None):
     """frange generates a set of floating point or integer values over the 
     range [start, stop) with step size step
 
