@@ -10,6 +10,9 @@ __date__ ="$2013$"
 
 import argparse
 import re
+import sys
+
+DEFAULT_SEPARATOR = '\n'
 
 def main():
     args = parseArgs()
@@ -17,11 +20,12 @@ def main():
     if args.format != None:
         args.format = checkFormatString(args.format)
         if args.format == None:            
-            return
-    if args.separator != None:
+            return 0
+    if args.separator != DEFAULT_SEPARATOR:
         args.separator = processSeparator(args.separator)
     seqIterator = frange(args.first, args.increment, args.last + args.increment)
     printSeq(seqIterator,args) 
+    return 1
 
 
 # Parces the command line arguments and returns a Namespace object with the options.   
@@ -30,7 +34,7 @@ def parseArgs():
     parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
     parser.add_argument('-v','--version', action='version', version='%(prog)s "Compliance Level 1"')
     parser.add_argument('-f','--format=',metavar='FORMAT',dest='format', help='use printf style floating-point FORMAT')
-    parser.add_argument('-s','--separator=',metavar='STRING',dest='separator', help='use STRING to separate numbers')
+    parser.add_argument('-s','--separator=',metavar='STRING',dest='separator', default = DEFAULT_SEPARATOR, help='use STRING to separate numbers')
     parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true',help='equalize width by padding with leading zeros')
     parser.add_argument('first', nargs='?', type=numberType, default='1', help='starting value')
     parser.add_argument('increment', nargs='?', type=numberType, default='1', help='increment')
@@ -83,28 +87,31 @@ def printSeq(iter,args):
     """
       
     numLength=1
-    if args.equalWidth:
-        numLength = getMaxNumLength(args.first,args.last,args.increment)
-
+    if args.equalWidth:       
+        numLength = getMaxNumLength(args.first,args.increment,args.last)
     #zfill pads zeros to the front after the sign
-    #if no format specified use the default handling        
-    if args.format == None:
-        for i in iter:
-            print(str(i).zfill(numLength),end=args.separator)
-    
-    #equal length strings are not attempted if format string is provided.
-    else:    
-        for i in iter:
-            print((args.format % i),end=args.separator)
-    
-    # print a backspace and newline if a custom seporator is used that does not end with a newline.
-    if args.separator is not None:
-        if len(args.separator) is 0:
+    #if no format string is specified use the default precision handling 
+    #we check for the existance of the next iter before printing the separator.
+    if args.format == None:     
+        try: 
+            i = next(iter)
+            while True:
+                sys.stdout.write(str(i).zfill(numLength))
+                i = next(iter)
+                sys.stdout.write(args.separator)
+        except StopIteration:
             print()
-        else:
-            if args.separator[-1] !='\n':
-                print('\b ')
-        
+
+    else:    
+        try: 
+            i = next(iter)
+            while True:
+                sys.stdout.write(args.format % i)
+                i = next(iter)
+                sys.stdout.write(args.separator)
+        except StopIteration:
+            print()
+
         
 # returns the max lengh of a number between first and last by increment.
 def getMaxNumLength(first,increment,last):

@@ -19,7 +19,10 @@ class  Sequ_TestCase(unittest.TestCase):
                         ['sequ','-s',':','5'],
                         ['sequ','-s','\\','1','5'],
                         ['sequ','-s','\n','1','1','5'],
-                        ['sequ','-w','-10','1','10'],
+                        ['sequ','-s',':-:','1','1','5'],
+                        ['sequ','-s',':\t:','1','1','5'],
+                        ['sequ','-s',':\n:','1','1','5'],
+                        ['sequ','-w','-10','.1','1'],
                         ['sequ','-w','5','1','10'],
                         ['sequ','-f','%.3f','9.9','.01','10'],
                         ['sequ','-f','%.3F','9.9','.01','10'],
@@ -30,9 +33,9 @@ class  Sequ_TestCase(unittest.TestCase):
                         ]
         self.name = 'sequ'
         self.flags =['-f','-w','-s']
-        self.formatStrings = ['aa%%a%004.4faa','%++--g','%E',
+        self.formatStrings = ['%f','aa%%a%004.4faa','%++--g','%E',
                               '%F','%G','%#f','%0010.2f']
-        self.separators=['','\n',':','a','\\','\t',' ',"'",',']
+        self.separators=['','\n',':','a','\\','\t',' ',"'",',',':\n:','---','--\n']
         
         self.args = argparse.Namespace()
         self.args.equalWidth = False
@@ -40,35 +43,44 @@ class  Sequ_TestCase(unittest.TestCase):
         self.args.increment = 1
         self.args.last = 1
         self.args.format = None
-        self.args.separator = None
+        self.args.separator = DEFAULT_SEPARATOR
 
         
     def test_parseArgs(self):
+        print('Testing parseArgs')
         for i in self.argLists:
            sys.argv = i
            parseArgs()
            
     def test_printSeq(self):
-        print("Printing separators",self.separators)
+        print("Testing printSeq")
+        print("Printing 1 to 4 with separators",self.separators)
         for i in range(len(self.separators)):
-            print(r'separator = %s'% self.separators[i])
+            print('separator = "%s"' % self.separators[i])
             self.args.separator = self.separators[i]
-            printSeq(range(5),self.args)
-        self.args.separator=None
+            printSeq(frange(1,1,5),self.args)
+        self.args.separator=DEFAULT_SEPARATOR
         
+        print("Testing with format strings")
+        print(self.formatStrings)
         for i in range(len(self.formatStrings)):
+            print('Formats string = "%s"' % self.formatStrings[i])
             self.args.format = self.formatStrings[i]
-            printSeq(range(5),self.args)
-        self.args.format=None
+            printSeq(frange(1,1,5),self.args)
         
         self.args.equalWidth = True
-        printSeq(range(5),self.args)
+        self.args.format=None
+        self.args.first = -10
+        self.args.last = 1
+        self.args.increment = .1
+        print("Printing equal width with args = %s" % str(self.args))
+        printSeq(frange(-10,.1,1),self.args)
         
     def test_getMaxNumlength(self):
         startNum=-10#random.uniform(-10000,10000)
         endNum=10#random.uniform(randomStart,10000)
-        increment=-.001#round(random.uniform(0,10),8)        
-        iter = frange(startNum,endNum,increment)
+        increment=-.1#round(random.uniform(0,10),8)        
+        iter = frange(startNum,increment,endNum)
         length = getMaxNumLength(startNum,increment,endNum)
         print(startNum,endNum,increment,length)
         for i in iter:
