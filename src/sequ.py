@@ -33,9 +33,9 @@ def parseArgs():
     #http://docs.python.org/dev/library/argparse.html
     parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
     parser.add_argument('-v','--version', action='version', version='%(prog)s "Compliance Level 1"')
-    parser.add_argument('-f','--format=',metavar='FORMAT',dest='format', help='use printf style floating-point FORMAT')
-    parser.add_argument('-s','--separator=',metavar='STRING',dest='separator', default = DEFAULT_SEPARATOR, help='use STRING to separate numbers')
-    parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true',help='equalize width by padding with leading zeros')
+    parser.add_argument('-f','--format','--format=', metavar='FORMAT', dest='format', help='use printf style floating-point FORMAT')
+    parser.add_argument('-s','--separator','--separator=', metavar='STRING', type=str, dest='separator', default = DEFAULT_SEPARATOR, help='use STRING to separate numbers')
+    parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true', help='equalize width by padding with leading zeros')
     parser.add_argument('first', nargs='?', type=numberType, default='1', help='starting value')
     parser.add_argument('increment', nargs='?', type=numberType, default='1', help='increment')
     parser.add_argument('last', type=numberType, help='ending value') 

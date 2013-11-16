@@ -19,13 +19,13 @@ class  Sequ_TestCase(unittest.TestCase):
                         ['sequ','-s',':','5'],
                         ['sequ','-s','\\','1','5'],
                         ['sequ','-s','\n','1','1','5'],
-                        ['sequ','-s',':-:','1','1','5'],
-                        ['sequ','-s',':\t:','1','1','5'],
+                        ['sequ','--separator=',':--:','1','1','5'],
+                        ['sequ','--separator',':\t:','1','1','5'],
                         ['sequ','-s',':\n:','1','1','5'],
                         ['sequ','-w','-10','.1','1'],
                         ['sequ','-w','5','1','10'],
-                        ['sequ','-f','%.3f','9.9','.01','10'],
-                        ['sequ','-f','%.3F','9.9','.01','10'],
+                        ['sequ','--format=','%.3f','9.9','.01','10'],
+                        ['sequ','--format','%.3F','9.9','.01','10'],
                         ['sequ','-f','%.3e','9.9','.01','10'],
                         ['sequ','-f','%.3E','9.9','.01','10'],
                         ['sequ','-f','%.3g','9.9','.01','10'],
@@ -51,6 +51,7 @@ class  Sequ_TestCase(unittest.TestCase):
         for i in self.argLists:
            sys.argv = i
            parseArgs()
+        print()
            
     def test_printSeq(self):
         print("Testing printSeq")
