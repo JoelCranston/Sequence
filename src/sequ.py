@@ -11,9 +11,9 @@ __date__ ="$2013$"
 import argparse
 import re
 import sys
-
+import decimal
 DEFAULT_SEPARATOR = '\n'
-
+float()
 def main():
     args = parseArgs()
     # Check the format string if it is supplied, returns None if invalid.
@@ -23,7 +23,7 @@ def main():
             return 0
     if args.separator != DEFAULT_SEPARATOR:
         args.separator = processSeparator(args.separator)
-    seqIterator = frange(args.first, args.increment, args.last + args.increment)
+    seqIterator = drange(args.first, args.increment, args.last + args.increment)
     printSeq(seqIterator,args) 
     return 1
 
@@ -36,21 +36,11 @@ def parseArgs():
     parser.add_argument('-f','--format','--format=', metavar='FORMAT', dest='format', help='use printf style floating-point FORMAT')
     parser.add_argument('-s','--separator','--separator=', metavar='STRING', type=str, dest='separator', default = DEFAULT_SEPARATOR, help='use STRING to separate numbers')
     parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true', help='equalize width by padding with leading zeros')
-    parser.add_argument('first', nargs='?', type=numberType, default='1', help='starting value')
-    parser.add_argument('increment', nargs='?', type=numberType, default='1', help='increment')
-    parser.add_argument('last', type=numberType, help='ending value') 
+    parser.add_argument('first', nargs='?', type=decimal.Decimal, default='1', help='starting value')
+    parser.add_argument('increment', nargs='?', type=decimal.Decimal, default='1', help='increment')
+    parser.add_argument('last', type=decimal.Decimal, help='ending value') 
     args=parser.parse_args()
     return args
-
-
-# this function is only used by argparse to deturmine if the numbers are valid ints or floats.
-def numberType(argString):
-    '''
-    Takes a string and returns a float if there is a decimal point, otherwise returns a integer. 
-    '''
-    #http://stackoverflow.com/questions/379906/parse-string-to-float-or-int
-    num = float(argString) if '.' in argString else int(argString)    
-    return num
 
 
 #converts from double backslash to escape char.
@@ -114,11 +104,12 @@ def printSeq(iter,args):
 
         
 # returns the max lengh of a number between first and last by increment.
+# this should be rewritten now we are using Decimal, but it seems to work.
 def getMaxNumLength(first,increment,last):
     lenInc = len(str(increment))
     lenFI = len(str(first+increment))
     lenLI = len(str(last-increment))
-    if type(increment) == float:
+    if type(increment) == decimal.Decimal:
         lenFirst = len(str(float(first)))
         lenLast = len(str(float(last)))
     else:
@@ -126,28 +117,30 @@ def getMaxNumLength(first,increment,last):
         lenLast = len(str(last))
     return max(lenInc,lenLast,lenFirst,lenFI,lenLI)
 
-
-
+            
 #http://code.activestate.com/recipes/66472/
-def frange(start, step = 1, stop = None):
-    """frange generates a set of floating point or integer values over the 
+def drange(start, step = 1, stop = None, precision = None):
+    """drange generates a set of Decimal values over the
     range [start, stop) with step size step
+    drange([start,]  step, stop [,precision]])"""
+    # convert values to decimals if not already 
+    start = decimal.Decimal(start)
+    stop = decimal.Decimal(stop)
+    step = decimal.Decimal(step)
 
-    frange([start,] stop [, step ])"""
-    #avoid devide by zero and just yield start value endlessly
-    #this is the same behavior as coreutils seq
-    if step == 0:
+    if step is 0:
         while True:
             yield start
     else:
+        # find precision (NOT USED YET.)
+        if precision is not None:
+            decimal.getcontext().prec = precision
         # create a generator expression for the index values
-        indices = (i for i in range(0, int((stop-start)/step)))  
-        # yield results rounding floats to 14 digits to avoid displaying most
-        # floating point errors.
+        indices = (i for i in range(0,(int((stop-start)/step)))) 
+        # yield results
         for i in indices:
-            yield round(start + step*i,14)
-
-
+            yield start + step*i
+            
 if __name__ == "__main__":
      main()
      
