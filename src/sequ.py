@@ -13,16 +13,28 @@ import re
 import sys
 import decimal
 DEFAULT_SEPARATOR = '\n'
+VERSION = '%(prog)s "Compliance Level 2"'
 float()
 def main():
     args = parseArgs()
     # Check the format string if it is supplied, returns None if invalid.
-    if args.format != None:
+    if args.format is not None:
         args.format = checkFormatString(args.format)
-        if args.format == None:            
+        if args.format is None:            
             return 0
-    if args.separator != DEFAULT_SEPARATOR:
+        
+    if args.separator is not DEFAULT_SEPARATOR:
         args.separator = processSeparator(args.separator)
+    if args.words is True:
+        args.separator = ' '
+        
+    # if no pad is specified use defalut 0 for use with -w. If one is specified
+    # set equal width to true so it will be used.
+    if args.pad is None:
+        args.pad = '0'
+    else:
+        args.equalWidth=True
+    
     seqIterator = drange(args.first, args.increment, args.last + args.increment)
     printSeq(seqIterator,args) 
     return 1
@@ -32,14 +44,18 @@ def main():
 def parseArgs():
     #http://docs.python.org/dev/library/argparse.html
     parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
-    parser.add_argument('-v','--version', action='version', version='%(prog)s "Compliance Level 1"')
+    parser.add_argument('-v','--version', action='version', version=VERSION)
     parser.add_argument('-f','--format','--format=', metavar='FORMAT', dest='format', help='use printf style floating-point FORMAT')
     parser.add_argument('-s','--separator','--separator=', metavar='STRING', type=str, dest='separator', default = DEFAULT_SEPARATOR, help='use STRING to separate numbers')
     parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true', help='equalize width by padding with leading zeros')
+    parser.add_argument('-W','--words', dest='words', action='store_true', help='Output the sequence as single space separated line')
+    parser.add_argument('-p','--pad', dest='pad', metavar='PAD', help='equalize width by padding with leading PAD char')
+    parser.add_argument('-P','--pad-spaces', dest='pad', action='store_const', const=' ', help='equalize width by padding with leading spaces')
     parser.add_argument('first', nargs='?', type=decimal.Decimal, default='1', help='starting value')
     parser.add_argument('increment', nargs='?', type=decimal.Decimal, default='1', help='increment')
     parser.add_argument('last', type=decimal.Decimal, help='ending value') 
     args=parser.parse_args()
+    #print('DEBUG-',args)
     return args
 
 
@@ -67,8 +83,13 @@ def checkFormatString(formatStr):
     else:
         print("format string <%s> is not valid" % formatStr)
         return None
-  
     
+# Takes a string and pads the front after the sign to length, with pad char.    
+def charfill(x, length, pad):
+    if x[0] is '-':
+        return '-' + x[1:].rjust(length-1,pad)
+    return x.rjust(length,pad)
+
 def printSeq(iter,args):
     """
     Accepts a iterator and Namespace object.
@@ -79,14 +100,14 @@ def printSeq(iter,args):
     numLength=1
     if args.equalWidth:       
         numLength = getMaxNumLength(args.first,args.increment,args.last)
-    #zfill pads zeros to the front after the sign
+    #print('DEBUG - numlength=',numLength)
     #if no format string is specified use the default precision handling 
     #we check for the existance of the next iter before printing the separator.
     if args.format == None:     
         try: 
             i = next(iter)
             while True:
-                sys.stdout.write(str(i).zfill(numLength))
+                sys.stdout.write(charfill(str(i),numLength,args.pad))
                 i = next(iter)
                 sys.stdout.write(args.separator)
         except StopIteration:
@@ -102,21 +123,18 @@ def printSeq(iter,args):
         except StopIteration:
             print()
 
-        
-# returns the max lengh of a number between first and last by increment.
-# this should be rewritten now we are using Decimal, but it seems to work.
-def getMaxNumLength(first,increment,last):
-    lenInc = len(str(increment))
-    lenFI = len(str(first+increment))
-    lenLI = len(str(last-increment))
-    if type(increment) == decimal.Decimal:
-        lenFirst = len(str(float(first)))
-        lenLast = len(str(float(last)))
-    else:
-        lenFirst = len(str(first))
-        lenLast = len(str(last))
-    return max(lenInc,lenLast,lenFirst,lenFI,lenLI)
 
+# returns the max possible number length including sign.
+def getMaxNumLength(first,increment,last):
+    #y.quantize(x) returns y with a mantissa the length x's mantissa
+    lenFI=len(str(first.quantize(increment)))
+    lenF=len(str(first))
+    lenL=len(str(last))
+    lenLI=len(str(last.quantize(increment)))
+    #print('DEBUG - F, FI, L, LI:',lenF,lenFI,lenL,lenLI)
+    return max(lenF,lenFI,lenL,lenLI)
+    
+        
             
 #http://code.activestate.com/recipes/66472/
 def drange(start, step = 1, stop = None, precision = None):

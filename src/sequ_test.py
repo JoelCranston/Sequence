@@ -22,23 +22,33 @@ class  Sequ_TestCase(unittest.TestCase):
                         ['sequ','--separator=',':--:','1','1','5'],
                         ['sequ','--separator',':\t:','1','1','5'],
                         ['sequ','-s',':\n:','1','1','5'],
-                        ['sequ','-w','-10','.1','0'],
-                        ['sequ','-w','5','1','10'],
-                        ['sequ','-w','.1','0.01','.13'],
-                        ['sequ','--equal-width','1','.01','1.1'],
+                        ['sequ','--equal-width','-1','1','2'],
                         ['sequ','--format=','%.3f','9.9','.01','10'],
                         ['sequ','--format','%.3F','9.9','.01','10'],
                         ['sequ','-f','%.3e','9.9','.01','10'],
                         ['sequ','-f','%.3E','9.9','.01','10'],
                         ['sequ','-f','%.3g','9.9','.01','10'],
                         ['sequ','-f','%.3G','9.9','.01','10'],
+                        ['sequ','-W','-1','1','3'],
+                        ['sequ','--words','-1','1','3'],
+                        ['sequ','-W','-s','\n','-1','1','3'],
+                        ['sequ','-p','*','-1','1','3'],
+                        ['sequ','-P','-1','1','3'],
+                        ['sequ','--pad-spaces','-1','1','3'],
+                        ['sequ','--pad','#','-1','1','3'],
+                        ['sequ','--words','-p','#','-1','1','3'],                        
+                        ['sequ','-w','-10','.1','0'],
+                        ['sequ','-w','5','1','10'],
+                        ['sequ','-w','.1','0.01','.13'],
+                        ['sequ','-w','1','10000','2'],
+                        ['sequ','-w','5.01','1','10'],
                         ]
         self.name = 'sequ'
-        self.flags =['-f','-w','-s']
+        self.flags =['-f','-w','-s','-W','-p']
         self.formatStrings = ['%f','aa%%a%004.4faa','%++--g','%E',
                               '%F','%G','%#f','%0010.2f']
         self.separators=['','\n',':','a','\\','\t',' ',"'",',',':\n:','---','--\n']
-        
+        self.pads=[' ','0','#','-','\\']
         self.args = argparse.Namespace()
         self.args.equalWidth = False
         self.args.first = 1
@@ -46,6 +56,7 @@ class  Sequ_TestCase(unittest.TestCase):
         self.args.last = 1
         self.args.format = None
         self.args.separator = DEFAULT_SEPARATOR
+        self.args.pad = None
 
     def test_drange(self):
         print('Testing drange')
@@ -59,6 +70,7 @@ class  Sequ_TestCase(unittest.TestCase):
         print()
            
     def test_printSeq(self):
+        self.args.pad = '0'
         print("Testing printSeq")
         print("Printing 1 to 4 with separators",self.separators)
         for i in range(len(self.separators)):
@@ -66,6 +78,7 @@ class  Sequ_TestCase(unittest.TestCase):
             self.args.separator = self.separators[i]
             printSeq(drange(1,1,5),self.args)
         self.args.separator=DEFAULT_SEPARATOR
+        self.args.pad=None
         
         print("Testing with format strings")
         print(self.formatStrings)
@@ -76,25 +89,21 @@ class  Sequ_TestCase(unittest.TestCase):
         
         self.args.equalWidth = True
         self.args.format=None
-        self.args.first = decimal.Decimal('1')
-        self.args.last = decimal.Decimal("1.1")
-        self.args.increment = decimal.Decimal(".01")
-        print("Printing equal width with args = %s" % str(self.args))
-        printSeq(drange(self.args.first, self.args.increment, self.args.last),self.args)
+        self.args.first = decimal.Decimal("6")
+        self.args.increment = decimal.Decimal("1")
+        self.args.last = decimal.Decimal("10")
         
-    def test_getMaxNumLength(self):
-        print('Testing getMaxNumLength')
-        startNum= decimal.Decimal('-10')
-        endNum= decimal.Decimal('1')
-        increment= decimal.Decimal('-.1')        
-        iter = drange(startNum,increment,endNum)
-        length = getMaxNumLength(startNum,increment,endNum)
+        print(self.pads)
         
-        print(startNum,increment,endNum, ' length = ',length)
-        for i in iter:
-            assert len(str(i)) <= length
+        for i in self.pads:
+            self.args.pad = i
+            print("Printing equal width pads with args = %s" % str(self.args))
+            iter= drange(self.args.first, self.args.increment, self.args.last)
+            printSeq(iter,self.args)
+        self.args.pad=None
+        
     
-    def test_frange(self):
+    def test_drange(self):
         randomStart=random.randrange(-100,100,1)
         randomEnd=random.randrange(randomStart,1000,1)          
         iter= drange(randomStart,1,randomEnd)

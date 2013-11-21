@@ -1,0 +1,24 @@
+Joel Cranston
+https://jcrans2@projects.cecs.pdx.edu/git/masseycs300-jcrans2
+Notes for CL2
+
+
+Need to Add:
+    parser for -W, --words
+    parser for  -p, --pad
+    parser for  -P, --pad-spaces
+
+For -W, just need to set separator string to a space after processing. -W will override -s
+For -p we need to change zfill to a more flexable function, possibly .rjust(length,pad), -P will
+just override -p and set the fill to spaces. Both -p and -P will set equalWidth to true. need to 
+add a default value '0' for equalWidth to use when no pad is specified.
+
+Zfill placed the zeros after the sign char, while rjust() places them before. Both of these behaviors
+are desirable in some cases. (with spaces or non numeric charactors it should be before the sign?)
+
+After after class discussion it was deturmined that the spec is not complete and should be interpreted as desired,
+so i have decided to print all padding after the sign.
+
+11/20
+Rewrote maxNumLength, it was not working with decimals.
+created charFill, to replace zfill. works the same but accepts a pad char.
