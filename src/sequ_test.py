@@ -42,6 +42,12 @@ class  Sequ_TestCase(unittest.TestCase):
                         ['sequ','-w','.1','0.01','.13'],
                         ['sequ','-w','1','10000','2'],
                         ['sequ','-w','5.01','1','10'],
+                        ['sequ','-F','arabic','1','10'],
+                        ['sequ','-F','floating','1','10'],
+                        ['sequ','-F','alpha','1','10'],
+                        ['sequ','-F','ALPHA','0.01','.13'],
+                        ['sequ','-F','roman','10000','2'],
+                        ['sequ','-F','ROMAN','1','10'],
                         ]
         self.name = 'sequ'
         self.flags =['-f','-w','-s','-W','-p']

@@ -13,25 +13,21 @@ import re
 import sys
 import decimal
 DEFAULT_SEPARATOR = '\n'
-VERSION = '%(prog)s "Compliance Level 2"'
+WORD_SEPARATOR = ' '
+DEFAULT_PAD = '0'
+VERSION = '%(prog)s "Compliance Level 3"'
 float()
 def main():
     args = parseArgs()
-    # Check the format string if it is supplied, returns None if invalid.
-    if args.format is not None:
-        args.format = checkFormatString(args.format)
-        if args.format is None:            
-            return 0
         
     if args.separator is not DEFAULT_SEPARATOR:
         args.separator = processSeparator(args.separator)
     if args.words is True:
-        args.separator = ' '
-        
+        args.separator = WORD_SEPARATOR    
     # if no pad is specified use defalut 0 for use with -w. If one is specified
     # set equal width to true so it will be used.
     if args.pad is None:
-        args.pad = '0'
+        args.pad = DEFAULT_PAD 
     else:
         args.equalWidth=True
     
@@ -45,7 +41,8 @@ def parseArgs():
     #http://docs.python.org/dev/library/argparse.html
     parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
     parser.add_argument('-v','--version', action='version', version=VERSION)
-    parser.add_argument('-f','--format','--format=', metavar='FORMAT', dest='format', help='use printf style floating-point FORMAT')
+    parser.add_argument('-f','--format','--format=',type=formatString, metavar='FORMAT', dest='format', help='use printf style floating-point FORMAT')
+    parser.add_argument('-F','--format-word', type=formatWords, metavar='TYPE', dest='seqType', help='specifies a sequence type')
     parser.add_argument('-s','--separator','--separator=', metavar='STRING', type=str, dest='separator', default = DEFAULT_SEPARATOR, help='use STRING to separate numbers')
     parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true', help='equalize width by padding with leading zeros')
     parser.add_argument('-W','--words', dest='words', action='store_true', help='Output the sequence as single space separated line')
@@ -58,7 +55,25 @@ def parseArgs():
     #print('DEBUG-',args)
     return args
 
+#used by argparse to determine if format word is valid.
+def formatWords(formatWord):
+    
+    match = re.search('arabic|floating|alpha|ALPHA|roman|ROMAN',formatWord)
+    if match is None:
+        raise ValueError('Invalid format word')
+    return formatWord
+            
+#used by argparse to determine if a format string is valid.
+def formatString(formatStr):
 
+    match = re.search('\w*%[+0#-]*(\d*)(\.\d*)?[FfGgEe]\w*',formatStr)
+    # if it matches the above regex then it can be passed to print safely
+    if match is None:
+        raise ValueError('Invalid format string') 
+    #print('DEBUG - ',match.group())    
+    return formatStr
+         
+    
 #converts from double backslash to escape char.
 def processSeparator(separator):
     separator = separator.replace(r"\\",'\\')
@@ -71,18 +86,6 @@ def processSeparator(separator):
     separator = separator.replace(r"\'","'") 
     return separator
  
- 
-# This function checks the format string and edits it if nessasary
-def checkFormatString(formatStr):
-
-    match = re.search('\w*%[+0#-]*(\d*)(\.\d*)?[FfGgEe]\w*',formatStr)
-    # if it matches the above regex then it can be passed to print safely
-    if match is not None: 
-        #print('DEBUG - ',match.group())
-        return formatStr
-    else:
-        print("format string <%s> is not valid" % formatStr)
-        return None
     
 # Takes a string and pads the front after the sign to length, with pad char.    
 def charfill(x, length, pad):

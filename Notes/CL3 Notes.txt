@@ -1,0 +1,15 @@
+Joel Cranston
+https://jcrans2@projects.cecs.pdx.edu/git/masseycs300-jcrans2
+Notes for CL2
+
+TODO:
+Add -F, --Format-word; will need a function to identify valid format words.
+Change first, last to accept Alphabetic and Roman numerals when -F is specified.
+Create a sequence generator for alphabetic and Roman numerals.
+process 'last' to deturmine FormatType if not given
+
+
+
+11/27
+Moved format string checks into argparse.
+Created formatWords function to check format type in argparse.
