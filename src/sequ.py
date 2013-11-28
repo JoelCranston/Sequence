@@ -3,7 +3,7 @@
 #
 # Copyright ©2013 Joel Cranston
 #
-# sequ Prints a sequence of numbers to standard output.
+# sequ Prints a sequence of numbers or letters to standard output.
 
 __author__="Joel Cranston"
 __date__ ="$2013$"
@@ -38,29 +38,50 @@ def main():
 
 # Parces the command line arguments and returns a Namespace object with the options.   
 def parseArgs():
-    #http://docs.python.org/dev/library/argparse.html
-    parser = argparse.ArgumentParser(description='Prints a sequence of numbres to standard output')
-    parser.add_argument('-v','--version', action='version', version=VERSION)
-    parser.add_argument('-f','--format','--format=',type=formatString, metavar='FORMAT', dest='format', help='use printf style floating-point FORMAT')
-    parser.add_argument('-F','--format-word', type=formatWords, metavar='TYPE', dest='seqType', help='specifies a sequence type')
-    parser.add_argument('-s','--separator','--separator=', metavar='STRING', type=str, dest='separator', default = DEFAULT_SEPARATOR, help='use STRING to separate numbers')
-    parser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true', help='equalize width by padding with leading zeros')
-    parser.add_argument('-W','--words', dest='words', action='store_true', help='Output the sequence as single space separated line')
-    parser.add_argument('-p','--pad', dest='pad', metavar='PAD', help='equalize width by padding with leading PAD char')
-    parser.add_argument('-P','--pad-spaces', dest='pad', action='store_const', const=' ', help='equalize width by padding with leading spaces')
-    parser.add_argument('first', nargs='?', type=decimal.Decimal, default='1', help='starting value')
+    #The preparser only processes the format type arg 
+    preparser = argparse.ArgumentParser(description='Prints a sequence of numbers or letters to standard output')
+    #preparser.add_argument('-F','--format-word',type=formatWords, metavar='TYPE', dest='seqType', help='specifies a sequence type')
+    
+    
+    #parser = argparse.ArgumentParser(description='Prints a sequence of numbers or letters to standard output')
+    preparser.add_argument('-v','--version', action='version', version=VERSION)
+    preparser.add_argument('-f','--format','--format=',type=formatString, metavar='FORMAT', dest='format', help='use printf style floating-point FORMAT')
+    preparser.add_argument('-F','--format-word', type=formatWords, metavar='TYPE', dest='seqType', help='specifies a sequence type')
+    preparser.add_argument('-s','--separator','--separator=', metavar='STRING', type=str, dest='separator', default = DEFAULT_SEPARATOR, help='use STRING to separate numbers')
+    preparser.add_argument('-w','--equal-width', dest='equalWidth', action='store_true', help='equalize width by padding with leading zeros')
+    preparser.add_argument('-W','--words', dest='words', action='store_true', help='Output the sequence as single space separated line')
+    preparser.add_argument('-p','--pad', dest='pad', metavar='PAD', help='equalize width by padding with leading PAD char')
+    preparser.add_argument('-P','--pad-spaces', dest='pad', action='store_const', const=' ', help='equalize width by padding with leading spaces')
+    preArgs=preparser.parse_known_args()
+    print('DEBUG-',preArgs)
+    
+    types=[decimal.Decimal,roman,alphabetic]
+    limitType = 0;
+    #The positional arguments need to know what types they should accept, if it has been specified by -F
+    formatType = preArgs[0].seqType
+    if formatType == 'roman':
+        limitType = 1
+    if formatType == 'alpha':
+        limitType = 2
+    parser = argparse.ArgumentParser()
+    parser.add_argument('first', nargs='?', type=types[limitType], default='1', help='starting value')
     parser.add_argument('increment', nargs='?', type=decimal.Decimal, default='1', help='increment')
-    parser.add_argument('last', type=decimal.Decimal, help='ending value') 
-    args=parser.parse_args()
-    #print('DEBUG-',args)
+    parser.add_argument('last', type=types[limitType], help='ending value') 
+    args=parser.parse_args(args=preArgs[1],namespace=preArgs[0])
+    print('DEBUG-',args)
     return args
-
+#used by argparse to deterurmin valid roman chars.
+def roman(formatWord):
+    return formatWord
+def alphabetic(formatWord):
+    return formatWord
 #used by argparse to determine if format word is valid.
 def formatWords(formatWord):
     
     match = re.search('arabic|floating|alpha|ALPHA|roman|ROMAN',formatWord)
     if match is None:
-        raise ValueError('Invalid format word')
+        print('DEBUG - ',match.group())
+        raise argparse.ArgumentTypeError('Invalid format word')
     return formatWord
             
 #used by argparse to determine if a format string is valid.
@@ -69,7 +90,8 @@ def formatString(formatStr):
     match = re.search('\w*%[+0#-]*(\d*)(\.\d*)?[FfGgEe]\w*',formatStr)
     # if it matches the above regex then it can be passed to print safely
     if match is None:
-        raise ValueError('Invalid format string') 
+        raise argparse.ArgumentTypeError('[%s] is not a valid format string' % formatStr)
+        
     #print('DEBUG - ',match.group())    
     return formatStr
          

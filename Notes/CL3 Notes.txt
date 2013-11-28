@@ -5,6 +5,7 @@ Notes for CL2
 TODO:
 Add -F, --Format-word; will need a function to identify valid format words.
 Change first, last to accept Alphabetic and Roman numerals when -F is specified.
+Analyze -F to deturmine what types first,inc, and last should accept.
 Create a sequence generator for alphabetic and Roman numerals.
 process 'last' to deturmine FormatType if not given
 
