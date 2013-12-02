@@ -18,6 +18,8 @@ DEFAULT_PAD = '0'
 VERSION = '%(prog)s "Compliance Level 3"'
 float()
 def main():
+    
+    
     args = parseArgs()
         
     if args.separator is not DEFAULT_SEPARATOR:
@@ -30,20 +32,45 @@ def main():
         args.pad = DEFAULT_PAD 
     else:
         args.equalWidth=True
-    
-    seqIterator = drange(args.first, args.increment, args.last + args.increment)
-    printSeq(seqIterator,args) 
+        
+    if args.seqType == 'floating' or args.seqType == 'arabic':
+        seqIterator = drange(args.first, args.increment, args.last + args.increment)
+        printSeq(seqIterator,args) 
     return 1
+
+
+#Class used by argparse to deturmin valid limit arguments.
+class SetLimit(argparse.Action):
+    def __call__(self,parser,namespace,values,optionString=None):
+        print('DEBUG -SetLimit-',namespace) 
+        if namespace.seqType is None:
+            pass
+        self.roman(values,parser)
+        setattr(namespace,self.dest,values)
+        
+    #match valid roman numerals.
+    def roman(self,value,parser):
+        print('ROMAN CALLED')
+        #http://stackoverflow.com/questions/267399/how-do-you-match-only-valid-roman-numerals-with-a-regular-expression
+        match = re.search('(^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$)',value.upper())
+        
+        if match is None:
+            print('DEBUG -ERROR-')
+            parser.error('[%s] is not a valid roman numeral' % value)
+        else:
+            print('DEBUG -Matched- ',match.group(),' = ',fromRoman(match.group().upper()))
+            
+    def alpha(self,value):
+        match = re.search('([A-Za-z])',value)
+        if match is None:
+            print('DEBUG - ',match.group())
+            raise argparse.ArgumentTypeError('Invalid format word')
 
 
 # Parces the command line arguments and returns a Namespace object with the options.   
 def parseArgs():
-    #The preparser only processes the format type arg 
+    #The preparser processes the nonepositional arguments.
     preparser = argparse.ArgumentParser(description='Prints a sequence of numbers or letters to standard output')
-    #preparser.add_argument('-F','--format-word',type=formatWords, metavar='TYPE', dest='seqType', help='specifies a sequence type')
-    
-    
-    #parser = argparse.ArgumentParser(description='Prints a sequence of numbers or letters to standard output')
     preparser.add_argument('-v','--version', action='version', version=VERSION)
     preparser.add_argument('-f','--format','--format=',type=formatString, metavar='FORMAT', dest='format', help='use printf style floating-point FORMAT')
     preparser.add_argument('-F','--format-word', type=formatWords, metavar='TYPE', dest='seqType', help='specifies a sequence type')
@@ -53,31 +80,46 @@ def parseArgs():
     preparser.add_argument('-p','--pad', dest='pad', metavar='PAD', help='equalize width by padding with leading PAD char')
     preparser.add_argument('-P','--pad-spaces', dest='pad', action='store_const', const=' ', help='equalize width by padding with leading spaces')
     preArgs=preparser.parse_known_args()
-    print('DEBUG-',preArgs)
-    
-    types=[decimal.Decimal,roman,alphabetic]
-    limitType = 0;
-    #The positional arguments need to know what types they should accept, if it has been specified by -F
+    #print('DEBUG-',preArgs)
     formatType = preArgs[0].seqType
-    if formatType == 'roman':
-        limitType = 1
-    if formatType == 'alpha':
-        limitType = 2
+    argList = preArgs[1]
+    #if there was no format type specified look at last positional arg to determine type, and update preArgs
+    if formatType is None:
+        try:
+            formatType = getType(argList[-1])
+            preArgs[0].seqType = formatType
+        except ValueError:
+            preparser.error('[%s] is not a valid ending value' % argList[-1])
+    print("DEBUG-TypeCheck- ",formatType)
+    
+    
     parser = argparse.ArgumentParser()
-    parser.add_argument('first', nargs='?', type=types[limitType], default='1', help='starting value')
-    parser.add_argument('increment', nargs='?', type=decimal.Decimal, default='1', help='increment')
+    parser.set_defaults(first='1')
+    #The positional arguments need to know what types they should accept.  
+    limitType = 0
+    incType = 0
+    if formatType == 'roman' or formatType == 'ROMAN':
+        limitType = 1
+        incType = 1
+    if formatType == 'alpha' or formatType == 'ALPHA':
+        parser.set_defaults(first='a')
+        limitType = 2
+        incType = 3
+    if formatType == 'arabic':
+        limitType = 3
+        incType = 3
+ 
+    print('Debug-types-',limitType,incType)
+    types=[decimal.Decimal,roman,alphabetic,int]    
+    parser.add_argument('first', nargs='?', type=types[limitType], help='starting value')
+    parser.add_argument('increment', nargs='?', type=types[incType], default='1', help='increment')
     parser.add_argument('last', type=types[limitType], help='ending value') 
-    args=parser.parse_args(args=preArgs[1],namespace=preArgs[0])
-    print('DEBUG-',args)
+    args=parser.parse_args(args=argList,namespace=preArgs[0])
+    print('DEBUG-Final Args-',args)
     return args
-#used by argparse to deterurmin valid roman chars.
-def roman(formatWord):
-    return formatWord
-def alphabetic(formatWord):
-    return formatWord
+
 #used by argparse to determine if format word is valid.
 def formatWords(formatWord):
-    
     match = re.search('arabic|floating|alpha|ALPHA|roman|ROMAN',formatWord)
     if match is None:
         print('DEBUG - ',match.group())
@@ -86,15 +128,97 @@ def formatWords(formatWord):
             
 #used by argparse to determine if a format string is valid.
 def formatString(formatStr):
-
     match = re.search('\w*%[+0#-]*(\d*)(\.\d*)?[FfGgEe]\w*',formatStr)
     # if it matches the above regex then it can be passed to print safely
     if match is None:
         raise argparse.ArgumentTypeError('[%s] is not a valid format string' % formatStr)
-        
     #print('DEBUG - ',match.group())    
     return formatStr
-         
+
+#used by argparse to determin valid roman numerals, uppercase or lowercase. Or integer
+#Always returns an integer or raises an exception
+def roman(formatWord): 
+    print('DEBUG -roman()-',formatWord )
+    if isUpperRoman(formatWord.upper()):
+       return fromRoman(formatWord.upper())
+    print('DEBUG -roman()- not roman, checking int()')
+    #int() will raise a valueError if it can not be converted to a int.
+    return int(formatWord)
+    #raise argparse.ArgumentTypeError('[%s] is not a valid roman numeral or integer' % formatWord)
+ 
+#used by argparse to determin valid alphabetic chars.
+def alphabetic(formatWord):
+    print('DEBUG -alphabetic()-',formatWord)
+    if isUpperAlpha(formatWord.upper()) is True:
+        return formatWord
+    else:
+        print('DEBUG-Should get Type Error Here')
+        raise argparse.ArgumentTypeError('[%s] is not a valid alphabetic character' % formatWord)
+
+#used by argparse to determin valid integer values.
+#def arabic(formatWord):
+#    return int(formatWord)
+
+#
+# These test if a string is a member of a type.
+#
+#Upper case roman numeral
+def isUpperRoman(value):
+    print('DEBUG-isUpperRoman()',value)
+    match = re.search('(^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$)',str(value))
+    if match is None:
+        print('False')
+        return False
+    print('True')
+    return True
+
+#Lower case roman numeral
+def isLowerRoman(value):
+    print('DEBUG-isLoworRoman()',value)
+    match = re.search('(^m{0,4}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})$)',str(value))
+    if match is None:
+        print('False')
+        return False
+    print('True')
+    return True
+#single uppercase A-Z character
+def isUpperAlpha(value):
+    print('DEBUG -isUpperAlpha(string)-',value)
+    match = re.match('^([A-Z])$',value)
+    if match is None:
+        print('False')
+        return False
+    #print('DEBUG-ALPHA Pattern- ',match.group())
+    print('True')
+    return True
+#single lowercase a-z character
+def isLowerAlpha(value):
+    print('DEBUG -isLowerAlpha(string)-',value)
+    match = re.match('^([a-z])$',str(value))
+    if match is None:
+        print('False')
+        return False
+    print('True')
+    return True
+#Try to match the input to avalible types.
+def getType(string):
+    if isUpperAlpha(string):
+        return "ALPHA"
+    if isLowerAlpha(string):
+        return "alpha"
+    if isUpperRoman(string):
+        return "ROMAN"
+    if isLowerRoman(string):
+        return "roman"
+    try:
+        int(string)
+        return "arabic"
+    except ValueError: 
+        pass 
+    float(string)
+    return "floating"  
+    #raise a exception if nothing matches.
+    raise ValueError()
     
 #converts from double backslash to escape char.
 def processSeparator(separator):
@@ -184,6 +308,24 @@ def drange(start, step = 1, stop = None, precision = None):
         for i in indices:
             yield start + step*i
             
+            
+            
+            
+#Define digit mapping
+romanNumeralMap = (('M',  1000),('CM', 900),('D',  500),('CD', 400),('C',  100),('XC', 90),
+                   ('L',  50),('XL', 40),('X',  10),('IX', 9),('V',  5),('IV', 4),('I',  1))
+
+#http://www.diveintopython.net/unit_testing/stage_4.html
+def fromRoman(s):
+    """convert Roman numeral to integer"""
+    result = 0
+    index = 0
+    for numeral, integer in romanNumeralMap:
+        while s[index:index+len(numeral)] == numeral:
+            result += integer
+            index += len(numeral)
+    return result
+
 if __name__ == "__main__":
      main()
      
