@@ -31,40 +31,9 @@ def main():
     if args.pad is None:
         args.pad = DEFAULT_PAD 
     else:
-        args.equalWidth=True
-        
-    if args.seqType == 'floating' or args.seqType == 'arabic':
-        seqIterator = drange(args.first, args.increment, args.last + args.increment)
-        printSeq(seqIterator,args) 
-    return 1
-
-
-#Class used by argparse to deturmin valid limit arguments.
-class SetLimit(argparse.Action):
-    def __call__(self,parser,namespace,values,optionString=None):
-        print('DEBUG -SetLimit-',namespace) 
-        if namespace.seqType is None:
-            pass
-        self.roman(values,parser)
-        setattr(namespace,self.dest,values)
-        
-    #match valid roman numerals.
-    def roman(self,value,parser):
-        print('ROMAN CALLED')
-        #http://stackoverflow.com/questions/267399/how-do-you-match-only-valid-roman-numerals-with-a-regular-expression
-        match = re.search('(^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$)',value.upper())
-        
-        if match is None:
-            print('DEBUG -ERROR-')
-            parser.error('[%s] is not a valid roman numeral' % value)
-        else:
-            print('DEBUG -Matched- ',match.group(),' = ',fromRoman(match.group().upper()))
-            
-    def alpha(self,value):
-        match = re.search('([A-Za-z])',value)
-        if match is None:
-            print('DEBUG - ',match.group())
-            raise argparse.ArgumentTypeError('Invalid format word')
+        args.equalWidth=True      
+    printSeq(args) 
+    return 1 
 
 
 # Parces the command line arguments and returns a Namespace object with the options.   
@@ -83,6 +52,9 @@ def parseArgs():
     #print('DEBUG-',preArgs)
     formatType = preArgs[0].seqType
     argList = preArgs[1]
+    #CHECK FOR INVALID COMBOS (Parser,args)
+    
+    
     #if there was no format type specified look at last positional arg to determine type, and update preArgs
     if formatType is None:
         try:
@@ -90,33 +62,38 @@ def parseArgs():
             preArgs[0].seqType = formatType
         except ValueError:
             preparser.error('[%s] is not a valid ending value' % argList[-1])
-    print("DEBUG-TypeCheck- ",formatType)
+    #print("DEBUG-TypeCheck- ",formatType)  
     
-    
+    #The positional arguments need to know what types they should accept.
     parser = argparse.ArgumentParser()
-    parser.set_defaults(first='1')
-    #The positional arguments need to know what types they should accept.  
+    types=[floating,roman,LowerAlpha,UpperAlpha,int]
+    parser.set_defaults(first='1')  
     limitType = 0
     incType = 0
-    if formatType == 'roman' or formatType == 'ROMAN':
+    #limitType and incType are indexes into types[], which is a list of functions.
+    if formatType.upper() == 'ROMAN':
         limitType = 1
         incType = 1
-    if formatType == 'alpha' or formatType == 'ALPHA':
+    if formatType == 'alpha':
         parser.set_defaults(first='a')
         limitType = 2
-        incType = 3
-    if formatType == 'arabic':
+        incType = 4
+    if formatType == 'ALPHA':
+        parser.set_defaults(first='A')
         limitType = 3
-        incType = 3
- 
-    print('Debug-types-',limitType,incType)
-    types=[decimal.Decimal,roman,alphabetic,int]    
+        incType = 4
+    if formatType == 'arabic':
+        limitType = 4
+        incType = 4 
+    #print('Debug-types-',limitType,incType)     
     parser.add_argument('first', nargs='?', type=types[limitType], help='starting value')
     parser.add_argument('increment', nargs='?', type=types[incType], default='1', help='increment')
     parser.add_argument('last', type=types[limitType], help='ending value') 
     args=parser.parse_args(args=argList,namespace=preArgs[0])
-    print('DEBUG-Final Args-',args)
+    #print('DEBUG-Final Args-',args)
     return args
+
+
 
 #used by argparse to determine if format word is valid.
 def formatWords(formatWord):
@@ -135,70 +112,75 @@ def formatString(formatStr):
     #print('DEBUG - ',match.group())    
     return formatStr
 
-#used by argparse to determin valid roman numerals, uppercase or lowercase. Or integer
-#Always returns an integer or raises an exception
-def roman(formatWord): 
-    print('DEBUG -roman()-',formatWord )
-    if isUpperRoman(formatWord.upper()):
-       return fromRoman(formatWord.upper())
-    print('DEBUG -roman()- not roman, checking int()')
+#used by argparse to determine valid roman numerals, uppercase or lowercase. Or integers
+# Always returns an integer or raises an exception
+def roman(arg): 
+    #print('DEBUG -roman()-',arg )
+    if isUpperRoman(arg.upper()):
+       return fromRoman(arg.upper())
+    #print('DEBUG -roman()- not roman, checking int()')
     #int() will raise a valueError if it can not be converted to a int.
-    return int(formatWord)
-    #raise argparse.ArgumentTypeError('[%s] is not a valid roman numeral or integer' % formatWord)
- 
-#used by argparse to determin valid alphabetic chars.
-def alphabetic(formatWord):
-    print('DEBUG -alphabetic()-',formatWord)
-    if isUpperAlpha(formatWord.upper()) is True:
-        return formatWord
-    else:
-        print('DEBUG-Should get Type Error Here')
-        raise argparse.ArgumentTypeError('[%s] is not a valid alphabetic character' % formatWord)
+    value = int(arg)
+    if value < 1:
+        raise argparse.ArgumentTypeError('[%s] is not a valid roman numeral' % arg)
+    return value
 
-#used by argparse to determin valid integer values.
+#used by argparse to determine valid LowerCase alphabetic chars.
+def LowerAlpha(arg):
+    if isLowerAlpha(arg):
+        return arg
+    else:
+        raise argparse.ArgumentTypeError('[%s] is not a valid lowercase alphabetic character' % arg)
+    
+#used by argparse to determine valid Uppercase alphabetic chars
+def UpperAlpha(arg):
+    if isUpperAlpha(arg):
+        return arg
+    else:
+        raise argparse.ArgumentTypeError('[%s] is not a valid uppercase alphabetic character' % arg) 
+    
+#used by argparse to determine if a floating point value is valid.
+def floating(arg): 
+    try:  
+        return decimal.Decimal(arg)
+    except:       
+        raise argparse.ArgumentTypeError('[%s] is not a valid number' % arg)
+    
+#used by argparse to determine valid integer values.
 #def arabic(formatWord):
 #    return int(formatWord)
+
 
 #
 # These test if a string is a member of a type.
 #
 #Upper case roman numeral
 def isUpperRoman(value):
-    print('DEBUG-isUpperRoman()',value)
+    #print('DEBUG-isUpperRoman()',value)
     match = re.search('(^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$)',str(value))
     if match is None:
-        print('False')
         return False
-    print('True')
     return True
-
 #Lower case roman numeral
 def isLowerRoman(value):
-    print('DEBUG-isLoworRoman()',value)
+    #print('DEBUG-isLoworRoman()',value)
     match = re.search('(^m{0,4}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})$)',str(value))
     if match is None:
-        print('False')
         return False
-    print('True')
     return True
 #single uppercase A-Z character
 def isUpperAlpha(value):
-    print('DEBUG -isUpperAlpha(string)-',value)
+    #print('DEBUG -isUpperAlpha(string)-',value)
     match = re.match('^([A-Z])$',value)
     if match is None:
-        print('False')
         return False
-    #print('DEBUG-ALPHA Pattern- ',match.group())
-    print('True')
     return True
 #single lowercase a-z character
 def isLowerAlpha(value):
-    print('DEBUG -isLowerAlpha(string)-',value)
+    #print('DEBUG -isLowerAlpha(string)-',value)
     match = re.match('^([a-z])$',str(value))
     if match is None:
-        print('False')
         return False
-    print('True')
     return True
 #Try to match the input to avalible types.
 def getType(string):
@@ -213,12 +195,13 @@ def getType(string):
     try:
         int(string)
         return "arabic"
-    except ValueError: 
+    except: 
         pass 
-    float(string)
-    return "floating"  
-    #raise a exception if nothing matches.
-    raise ValueError()
+    try:
+        decimal.Decimal(string)
+        return "floating"
+    except:
+        raise ValueError()
     
 #converts from double backslash to escape char.
 def processSeparator(separator):
@@ -239,42 +222,12 @@ def charfill(x, length, pad):
         return '-' + x[1:].rjust(length-1,pad)
     return x.rjust(length,pad)
 
-def printSeq(iter,args):
-    """
-    Accepts a iterator and Namespace object.
-    Prints each element seporated by seporator char and 
-    displayed with printf style format string.
-    """
-      
-    numLength=1
-    if args.equalWidth:       
-        numLength = getMaxNumLength(args.first,args.increment,args.last)
-    #print('DEBUG - numlength=',numLength)
-    #if no format string is specified use the default precision handling 
-    #we check for the existance of the next iter before printing the separator.
-    if args.format == None:     
-        try: 
-            i = next(iter)
-            while True:
-                sys.stdout.write(charfill(str(i),numLength,args.pad))
-                i = next(iter)
-                sys.stdout.write(args.separator)
-        except StopIteration:
-            print()
-
-    else:    
-        try: 
-            i = next(iter)
-            while True:
-                sys.stdout.write(args.format % i)
-                i = next(iter)
-                sys.stdout.write(args.separator)
-        except StopIteration:
-            print()
-
-
+        
 # returns the max possible number length including sign.
 def getMaxNumLength(first,increment,last):
+    #make sure they are decimal before calling quantize()
+    first = decimal.Decimal(first)
+    last = decimal.Decimal(last)
     #y.quantize(x) returns y with a mantissa the length x's mantissa
     lenFI=len(str(first.quantize(increment)))
     lenF=len(str(first))
@@ -311,10 +264,11 @@ def drange(start, step = 1, stop = None, precision = None):
             
             
             
-#Define digit mapping
+#Define digit mapping for roman numerals
 romanNumeralMap = (('M',  1000),('CM', 900),('D',  500),('CD', 400),('C',  100),('XC', 90),
                    ('L',  50),('XL', 40),('X',  10),('IX', 9),('V',  5),('IV', 4),('I',  1))
 
+#converts a roman numeral to an int.
 #http://www.diveintopython.net/unit_testing/stage_4.html
 def fromRoman(s):
     """convert Roman numeral to integer"""
@@ -325,6 +279,100 @@ def fromRoman(s):
             result += integer
             index += len(numeral)
     return result
+
+# convert a int to a roman numeral
+#http://www.diveintopython.net/unit_testing/stage_2.html
+def toRoman(n):
+    """convert integer to Roman numeral"""
+    result = ""
+    for numeral, integer in romanNumeralMap:
+        while n >= integer:
+            result += numeral
+            n -= integer
+    return result
+
+
+
+def printSeq(args):
+    """
+    Accepts a iterator and Namespace object.
+    Prints each element seporated by seporator char and 
+    displayed with printf style format string.
+    """  
+      
+    numLength = 1  
+    if args.equalWidth: 
+        #if we need to do equal witdth on roman, check the length of each element produced by the generator.
+        if args.seqType.upper() == "ROMAN":
+            for i in drange(args.first, args.increment, args.last + args.increment):
+                numLength = max(len(toRoman(i)),numLength)
+        #for non roman we can use the function.
+        else:      
+            numLength = getMaxNumLength(args.first,args.increment,args.last)   
+    
+    ##Prints alphabetic 
+    if args.seqType.upper() == 'ALPHA':
+        iter = drange(ord(args.first), args.increment, ord(args.last) + args.increment)
+        try: 
+            i = next(iter)
+            while True:
+                sys.stdout.write(str(chr(i)))
+                i = next(iter)
+                sys.stdout.write(args.separator)
+        except StopIteration:
+            print()
+            return 
+    
+    #Create the sequence generator.
+    iter = drange(args.first, args.increment, args.last + args.increment)
+    
+    ##print in uppercase roman numerals.
+    if args.seqType == 'ROMAN':
+        try: 
+            i = next(iter)
+            while True:
+                sys.stdout.write(charfill(str(toRoman(i)),numLength,args.pad))
+                i = next(iter)
+                sys.stdout.write(args.separator)
+        except StopIteration:
+            print()
+            return   
+        
+    ##Print in lowercase roman numerals
+    if args.seqType == 'roman':
+        try: 
+            i = next(iter)
+            while True:
+                sys.stdout.write(charfill(str(toRoman(i).lower()),numLength,args.pad))
+                i = next(iter)
+                sys.stdout.write(args.separator)
+        except StopIteration:
+            print()
+            return
+
+    ##Prints integers and floats without format string
+    #if no format string is specified use the default precision handling 
+    if args.format is None:   
+        try: 
+            i = next(iter)
+            while True:
+                sys.stdout.write(charfill(str(i),numLength,args.pad))
+                i = next(iter)
+                sys.stdout.write(args.separator)
+        except StopIteration:
+            print()
+            
+    ##Prints integers and floats with format string
+    else:    
+        try: 
+            i = next(iter)
+            while True:
+                sys.stdout.write(args.format % i)
+                i = next(iter)
+                sys.stdout.write(args.separator)
+        except StopIteration:
+            print()
+
 
 if __name__ == "__main__":
      main()

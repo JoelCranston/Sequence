@@ -23,12 +23,12 @@ class  Sequ_TestCase(unittest.TestCase):
                         ['sequ','--separator',':\t:','1','1','5'],
                         ['sequ','-s',':\n:','1','1','5'],
                         ['sequ','--equal-width','-1','1','2'],
-                        ['sequ','--format=','%.3f','9.9','.01','10'],
-                        ['sequ','--format','%.3F','9.9','.01','10'],
-                        ['sequ','-f','%.3e','9.9','.01','10'],
-                        ['sequ','-f','%.3E','9.9','.01','10'],
-                        ['sequ','-f','%.3g','9.9','.01','10'],
-                        ['sequ','-f','%.3G','9.9','.01','10'],
+                        ['sequ','--format=','%.3f','9.9','.01','10.0'],
+                        ['sequ','--format','%.3F','9.9','.01','10.0'],
+                        ['sequ','-f','%.3e','9.9','.01','10.'],
+                        ['sequ','-f','%.3E','9.9','.01','10.'],
+                        ['sequ','-f','%.3g','9.9','.01','10.'],
+                        ['sequ','-f','%.3G','9.9','.01','10.'],
                         ['sequ','-W','-1','1','3'],
                         ['sequ','--words','-1','1','3'],
                         ['sequ','-W','-s','\n','-1','1','3'],
@@ -37,18 +37,45 @@ class  Sequ_TestCase(unittest.TestCase):
                         ['sequ','--pad-spaces','-1','1','3'],
                         ['sequ','--pad','#','-1','1','3'],
                         ['sequ','--words','-p','#','-1','1','3'],                        
-                        ['sequ','-w','-10','.1','0'],
                         ['sequ','-w','5','1','10'],
                         ['sequ','-w','.1','0.01','.13'],
-                        ['sequ','-w','1','10000','2'],
-                        ['sequ','-w','5.01','1','10'],
+                        ['sequ','-w','-F','floating','1','10000','2'],
+                        ['sequ','-w','-F','floating','5.01','1','10'],
                         ['sequ','-F','arabic','1','10'],
                         ['sequ','-F','floating','1','10'],
-                        ['sequ','-F','alpha','1','10'],
-                        ['sequ','-F','ALPHA','0.01','.13'],
+                        ['sequ','-F','alpha','e'],
+                        ['sequ','-F','alpha','x','-1','n'],
+                        ['sequ','-F','alpha','b','2','f'],
+                        ['sequ','-F','alpha','a','e'],  
+                        ['sequ','-F','ALPHA','C'],
+                        ['sequ','-F','ALPHA','A','C'],
+                        ['sequ','-F','ALPHA','B','2','F'],
+                        ['sequ','-F','ALPHA','Z','-2','N'],
+                        ['sequ','-s',': :','-F','ALPHA','A','1','D'],
+                        ['sequ','--words','-F','ALPHA','A','1','D'],
                         ['sequ','-F','roman','10000','2'],
                         ['sequ','-F','ROMAN','1','10'],
+                        ['sequ','-F','ROMAN','v'],
+                        ['sequ','-F','ROMAN','i','v'],
+                        ['sequ','-F','ROMAN','V','I','x'],
+                        ['sequ','-F','ROMAN','--words','V','I','X'],
+                        ['sequ','-s',': :','-F','ROMAN','I','I','V'],
+                        ['sequ','-w','-F','ROMAN','I','I','V'],
+                        ['sequ','-p','#','-F','ROMAN','I','I','V'],
+                        ['sequ','-P','-F','ROMAN','I','I','V'],
+                        ['sequ','-s',': :','-F','roman','v'],
+                        ['sequ','-w','-F','roman','v'],
+                        ['sequ','-p','#','-F','roman','v'],
+                        ['sequ','-P','-F','roman','v'],
+                        ['sequ','C'],
+                        ['sequ','c'],
                         ]
+        self.errors = [['sequ','-w','-10','.1','0'],
+                       ['sequ','-F','alpha','1'],
+                       ['sequ','-F','ALPHA','c'],
+                       ['sequ','-F','ALPHA','4'],
+                       ['sequ','-F','ROMAN','-1','I','V'],
+                       ]                
         self.name = 'sequ'
         self.flags =['-f','-w','-s','-W','-p']
         self.formatStrings = ['%f','aa%%a%004.4faa','%++--g','%E',
@@ -75,7 +102,7 @@ class  Sequ_TestCase(unittest.TestCase):
            parseArgs()
         print()
            
-    def test_printSeq(self):
+    def DISABLEDtest_printSeq(self):
         self.args.pad = '0'
         print("Testing printSeq")
         print("Printing 1 to 4 with separators",self.separators)

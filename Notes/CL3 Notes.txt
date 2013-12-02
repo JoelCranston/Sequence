@@ -3,14 +3,33 @@ https://jcrans2@projects.cecs.pdx.edu/git/masseycs300-jcrans2
 Notes for CL2
 
 TODO:
-Add -F, --Format-word; will need a function to identify valid format words.
-Change first, last to accept Alphabetic and Roman numerals when -F is specified.
-Analyze -F to deturmine what types first,inc, and last should accept.
-Create a sequence generator for alphabetic and Roman numerals.
-process 'last' to deturmine FormatType if not given
+Add -F, --Format-word; will need a function to identify valid format words. DONE
+Change first, last to accept Alphabetic and Roman numerals when -F is specified.DONE
+Analyze -F to deturmine what types first,inc, and last should accept. DONE
+Create a sequence generator for alphabetic and Roman numerals. DONE
+process 'last' to deturmine FormatType if not given. DONE
+-f while specifing none floating point. (currently ignored.)
+separator stings with alpha.(roman already works.)DONE
+equal width on roman.(alpha is always 1 so it can be ignored.)DONE
+
+
 
 
 
 11/27
 Moved format string checks into argparse.
 Created formatWords function to check format type in argparse.
+11/28
+created functions for argument type identification. alphabetic, roman 
+12/1
+created functions to identify a limit type and set the seqType to that value if not included
+NOTE: this functionality breaks some previous possibilities. ie(1.1 10) will now result in an error
+as the type is set by the last value to arabic and the first is given in floating. 
+Also bug currently exists that allows lowercase alpha or roman when Upper is specified.
+
+changed alphabetic() to UpperAlpha(), LowarAlpha(). User is now required to use all upper or all lower.
+Updated test code, argparse exits with a value of 2 on some invalid argument combos, but gives normal error messages.
+
+Moved call to drange into printSeq(), can now use it with alphabetics.
+
+Modified the test for equalWidth to work with Roman.
