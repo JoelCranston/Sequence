@@ -11,7 +11,8 @@ process 'last' to deturmine FormatType if not given. DONE
 -f while specifing none floating point. (currently ignored.)
 separator stings with alpha.(roman already works.)DONE
 equal width on roman.(alpha is always 1 so it can be ignored.)DONE
-
+Add -n option to argparse. DONE
+Add -method to print from files. DONE.
 
 
 
@@ -36,3 +37,427 @@ Modified the test for equalWidth to work with Roman.
 12/2
 fixed a divide by zero error in drange()
 Cleaned up code.
+
+12/6
+Added -n, --number-lines option to argparse
+Added functions to find the number of lines in a file, and to print from a file adding line numbers.
+Fixed bug where -w was used while format word "alpha" was being used attempted to cast  a character to a decimal.
+
+moved printing of alpha sequences into their own function and renamed printseq to printNumSeq
+moved the number sequence width logic out of printNumSeq as it is also used in the printFromFile.
+ 
+
+Test Results:
+start of full app test
+['sequ', '1', '1', '5']
+1
+2
+3
+4
+5
+['sequ', '1', '5']
+1
+2
+3
+4
+5
+['sequ', '-1']
+
+['sequ', '5']
+1
+2
+3
+4
+5
+['sequ', '1.00', '1.01', '5.00']
+1.00
+2.01
+3.02
+4.03
+['sequ', '-3', '1', '3']
+-3
+-2
+-1
+0
+1
+2
+3
+['sequ', '10', '-1', '1']
+10
+9
+8
+7
+6
+5
+4
+3
+2
+1
+['sequ', '-f', 'abc%%def%-+0#2.2fabc', '1', '1', '5']
+abc%def+1.00abc
+abc%def+2.00abc
+abc%def+3.00abc
+abc%def+4.00abc
+abc%def+5.00abc
+['sequ', '-s', ':', '5']
+1:2:3:4:5
+['sequ', '-s', '\\', '1', '5']
+1\2\3\4\5
+['sequ', '-s', '\n', '1', '1', '5']
+1
+2
+3
+4
+5
+['sequ', '--separator=', ':--:', '1', '1', '5']
+1:--:2:--:3:--:4:--:5
+['sequ', '--separator', ':\t:', '1', '1', '5']
+1:	:2:	:3:	:4:	:5
+['sequ', '-s', ':\n:', '1', '1', '5']
+1:
+:2:
+:3:
+:4:
+:5
+['sequ', '--equal-width', '-1', '1', '2']
+-1
+00
+01
+02
+['sequ', '--format=', '%.3f', '9.9', '.01', '10.0']
+9.900
+9.910
+9.920
+9.930
+9.940
+9.950
+9.960
+9.970
+9.980
+9.990
+10.000
+['sequ', '--format', '%.3F', '9.9', '.01', '10.0']
+9.900
+9.910
+9.920
+9.930
+9.940
+9.950
+9.960
+9.970
+9.980
+9.990
+10.000
+['sequ', '-f', '%.3e', '9.9', '.01', '10.']
+9.900e+00
+9.910e+00
+9.920e+00
+9.930e+00
+9.940e+00
+9.950e+00
+9.960e+00
+9.970e+00
+9.980e+00
+9.990e+00
+1.000e+01
+['sequ', '-f', '%.3E', '9.9', '.01', '10.']
+9.900E+00
+9.910E+00
+9.920E+00
+9.930E+00
+9.940E+00
+9.950E+00
+9.960E+00
+9.970E+00
+9.980E+00
+9.990E+00
+1.000E+01
+['sequ', '-f', '%.3g', '9.9', '.01', '10.']
+9.9
+9.91
+9.92
+9.93
+9.94
+9.95
+9.96
+9.97
+9.98
+9.99
+10
+['sequ', '-f', '%.3G', '9.9', '.01', '10.']
+9.9
+9.91
+9.92
+9.93
+9.94
+9.95
+9.96
+9.97
+9.98
+9.99
+10
+['sequ', '-W', '-1', '1', '3']
+-1 0 1 2 3
+['sequ', '--words', '-1', '1', '3']
+-1 0 1 2 3
+['sequ', '-W', '-s', '\n', '-1', '1', '3']
+-1 0 1 2 3
+['sequ', '-p', '*', '-1', '1', '3']
+-1
+*0
+*1
+*2
+*3
+['sequ', '-P', '-1', '1', '3']
+-1
+ 0
+ 1
+ 2
+ 3
+['sequ', '--pad-spaces', '-1', '1', '3']
+-1
+ 0
+ 1
+ 2
+ 3
+['sequ', '--pad', '#', '-1', '1', '3']
+-1
+#0
+#1
+#2
+#3
+['sequ', '--words', '-p', '#', '-1', '1', '3']
+-1 #0 #1 #2 #3
+['sequ', '-w', '5', '1', '10']
+05
+06
+07
+08
+09
+10
+['sequ', '-w', '.1', '0.01', '.13']
+0.10
+0.11
+0.12
+0.13
+['sequ', '-w', '-F', 'floating', '1', '10000', '2']
+1
+['sequ', '-w', '-F', 'floating', '5.01', '1', '10']
+5.01
+6.01
+7.01
+8.01
+9.01
+['sequ', '-F', 'arabic', '1', '10']
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+['sequ', '-F', 'floating', '1', '10']
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+['sequ', '-F', 'alpha', 'e']
+a
+b
+c
+d
+e
+['sequ', '-F', 'alpha', 'x', '-1', 'n']
+x
+w
+v
+u
+t
+s
+r
+q
+p
+o
+n
+['sequ', '-F', 'alpha', 'b', '2', 'f']
+b
+d
+f
+['sequ', '-w', '-F', 'alpha', 'b', '2', 'f']
+b
+d
+f
+['sequ', '-F', 'alpha', 'a', 'e']
+a
+b
+c
+d
+e
+['sequ', '-F', 'ALPHA', 'C']
+A
+B
+C
+['sequ', '-F', 'ALPHA', 'A', 'C']
+A
+B
+C
+['sequ', '-F', 'ALPHA', 'B', '2', 'F']
+B
+D
+F
+['sequ', '-F', 'ALPHA', 'Z', '-2', 'N']
+Z
+X
+V
+T
+R
+P
+N
+['sequ', '-s', ': :', '-F', 'ALPHA', 'A', '1', 'D']
+A: :B: :C: :D
+['sequ', '--words', '-F', 'ALPHA', 'A', '1', 'D']
+A B C D
+['sequ', '-F', 'ROMAN', '1', '10']
+I
+II
+III
+IV
+V
+VI
+VII
+VIII
+IX
+X
+['sequ', '-F', 'ROMAN', 'v']
+I
+II
+III
+IV
+V
+['sequ', '-F', 'ROMAN', 'i', 'v']
+I
+II
+III
+IV
+V
+['sequ', '-F', 'ROMAN', 'V', 'I', 'x']
+V
+VI
+VII
+VIII
+IX
+X
+['sequ', '-F', 'ROMAN', '--words', 'V', 'I', 'X']
+V VI VII VIII IX X
+['sequ', '-s', ': :', '-F', 'ROMAN', 'I', 'I', 'V']
+I: :II: :III: :IV: :V
+['sequ', '-w', '-F', 'ROMAN', 'I', 'I', 'V']
+  I
+ II
+III
+ IV
+  V
+['sequ', '-p', '#', '-F', 'ROMAN', 'I', 'I', 'V']
+##I
+#II
+III
+#IV
+##V
+['sequ', '-P', '-F', 'ROMAN', 'I', 'I', 'V']
+  I
+ II
+III
+ IV
+  V
+['sequ', '-s', ': :', '-F', 'roman', 'v']
+i: :ii: :iii: :iv: :v
+['sequ', '-w', '-F', 'roman', 'v']
+  i
+ ii
+iii
+ iv
+  v
+['sequ', '-p', '#', '-F', 'roman', 'v']
+##i
+#ii
+iii
+#iv
+##v
+['sequ', '-P', '-F', 'roman', 'v']
+  i
+ ii
+iii
+ iv
+  v
+['sequ', 'C']
+A
+B
+C
+['sequ', 'c']
+a
+b
+c
+['sequ', 'IV']
+I
+II
+III
+IV
+['sequ', 'iv']
+i
+ii
+iii
+iv
+['sequ', '-w', '-10', '.1', '0']
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+            [first] [increment] last
+sequ: error: argument increment: [.1] is not a valid integer
+
+['sequ', 'A', '.1', '.5']
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+            [first] [increment] last
+sequ: error: argument first: [A] is not a valid number
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+sequ: error: [AA] is not a valid ending value
+['sequ', 'AA']
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+            [first] [increment] last
+sequ: error: argument last: [1] is not a valid lowercase alphabetic character
+['sequ', '-F', 'alpha', '1']
+['sequ', '-F', 'ALPHA', 'c']
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+            [first] [increment] last
+sequ: error: argument last: [c] is not a valid uppercase alphabetic character
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+            [first] [increment] last
+sequ: error: argument last: [4] is not a valid uppercase alphabetic character
+['sequ', '-F', 'ALPHA', '4']
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+            [first] [increment] last
+sequ: error: argument first: [-1] is not a valid roman numeral
+['sequ', '-F', 'ROMAN', '-1', 'I', 'V']
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+            [first] [increment] last
+sequ: error: argument increment: [-1] is not a valid roman numeral
+['sequ', '-F', 'roman', '5', '-1', '1']
+usage: sequ [-h] [-v] [-f FORMAT] [-F TYPE] [-s STRING] [-w] [-W] [-p PAD]
+            [-P] [-n FILE]
+            [first] [increment] last
+sequ: error: argument last: [iiii] is not a valid roman numeral
+['sequ', '-F', 'roman', '1', '1', 'iiii']
