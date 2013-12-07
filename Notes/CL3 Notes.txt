@@ -33,3 +33,6 @@ Updated test code, argparse exits with a value of 2 on some invalid argument com
 Moved call to drange into printSeq(), can now use it with alphabetics.
 
 Modified the test for equalWidth to work with Roman.
+12/2
+fixed a divide by zero error in drange()
+Cleaned up code.
