@@ -83,6 +83,8 @@ class  Sequ_TestCase(unittest.TestCase):
                         ['sequ','-F','ROMAN','-1','I','V'],
                         ['sequ','-F','roman','5','-1','1'],
                         ['sequ','-F','roman','1','1','iiii'],
+                        ['sequ','-n','C:\test.txt',"-F",'alpha'],
+                        ['sequ','-n','C:\test.txt','1'],
                         ]
         self.name = 'sequ'
         self.flags =['-f','-w','-s','-W','-p']
@@ -99,11 +101,11 @@ class  Sequ_TestCase(unittest.TestCase):
         self.args.separator = DEFAULT_SEPARATOR
         self.args.pad = None
 
-    def DISABLEDtest_drange(self):
+    def test_drange(self):
         print('Testing drange')
         randomStart=random.randrange(-100,100,1)
         randomEnd=random.randrange(randomStart,1000,1)
-        iter= drange(randomStart,1,randomEnd)
+        iter=drange(randomStart,1,randomEnd)
         for i in range(randomStart,randomEnd):
             assert i == next(iter)
 

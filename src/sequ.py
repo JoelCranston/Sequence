@@ -18,8 +18,8 @@ DEFAULT_PAD = '0'
 VERSION = '%(prog)s "Compliance Level 4"'
 
 # Define digit mapping for roman numerals
-romanNumeralMap = (('M',  1000),('CM', 900),('D',  500),('CD', 400),('C',  100),('XC', 90),
-                   ('L',  50),('XL', 40),('X',  10),('IX', 9),('V',  5),('IV', 4),('I',  1))
+romanNumeralMap = (('M', 1000),('CM', 900),('D', 500),('CD', 400),('C', 100),('XC', 90),
+                   ('L', 50),('XL', 40),('X', 10),('IX', 9),('V', 5),('IV', 4),('I', 1))
 
 
 def main():
@@ -43,12 +43,12 @@ def main():
         else:  
             args.pad = DEFAULT_PAD 
     else:
-        args.equalWidth=True 
+        args.equalWidth = True 
         
     if args.equalWidth is True:
-        args = getMaxSequenceLength(args)
+        args.numLength = getMaxSequenceLength(args.first, args.increment, args.last, args.seqType)
     else:
-        args.numLength=1
+        args.numLength = 1
     
     if args.file is None:
         if args.seqType.upper() == "ALPHA":
@@ -98,11 +98,11 @@ def parseArgs():
     if formatType.upper() == 'ALPHA' and preArgs[0].file is not None:
         parser.error('format word [alpha | ALPHA] is incompatible with [-n | --number_lines]')
     #The positional arguments need to know what types they should accept.
-    types=[floating,roman,LowerAlpha,UpperAlpha,arabic]
-    parser.set_defaults(first='1')  
+    parser.set_defaults(first='1')
+    argumentTypes = [floating, roman, LowerAlpha, UpperAlpha, arabic] 
     limitType = 0
     incType = 0
-    #limitType and incType are indexes into types[], which is a list of functions.
+    #limitType and incType are indexes into argumetTypes[], which is a list of functions.
     if formatType.upper() == 'ROMAN':
         limitType = 1
         incType = 1
@@ -117,13 +117,13 @@ def parseArgs():
     if formatType == 'arabic':
         limitType = 4
         incType = 4 
-    #print('Debug-types-',limitType,incType)     
-    parser.add_argument('first', nargs='?', type=types[limitType], help='starting value')
-    parser.add_argument('increment', nargs='?', type=types[incType], default='1', help='increment')
+    #print('Debug-types-', limitType, incType)     
+    parser.add_argument('first', nargs='?', type=argumentTypes[limitType], help='starting value')
+    parser.add_argument('increment', nargs='?', type=argumentTypes[incType], default='1', help='increment')
     if preArgs[0].file is None:
-        parser.add_argument('last', type=types[limitType], help='ending value')
+        parser.add_argument('last', type=argumentTypes[limitType], help='ending value')
     else:
-        preArgs[0].last=None
+        preArgs[0].last = None
     args=parser.parse_args(args=limitArgs,namespace=preArgs[0])
     args.parser = parser
     #print('DEBUG-Final Args-',args)
@@ -308,10 +308,10 @@ def maxNumLength(first,increment,last):
     first = decimal.Decimal(first)
     last = decimal.Decimal(last)
     #y.quantize(x) returns y with a mantissa the length x's mantissa
-    lenFI=len(str(first.quantize(increment)))
-    lenF=len(str(first))
-    lenL=len(str(last))
-    lenLI=len(str(last.quantize(increment)))
+    lenFI = len(str(first.quantize(increment)))
+    lenF = len(str(first))
+    lenL = len(str(last))
+    lenLI = len(str(last.quantize(increment)))
     #print('DEBUG - F, FI, L, LI:',lenF,lenFI,lenL,lenLI)
     return max(lenF,lenFI,lenL,lenLI)
 
@@ -319,19 +319,19 @@ def maxNumLength(first,increment,last):
 ##
 ## find the max length of a number or roman numeral sequence.
 ##
-def getMaxSequenceLength(args):
+def getMaxSequenceLength(first, increment, last, seqType):
     #alpha is limited to a single character.
-    args.numLength = 1 
-    if args.seqType.upper() == 'ALPHA':
-        return args
+    numLength = 1 
+    if seqType.upper() == 'ALPHA':
+        return numLength
     #for roman numerals check the length of each element produced by the generator.
-    if args.seqType.upper() == "ROMAN":
-        for i in drange(args.first, args.increment, args.last + args.increment):
-            args.numLength = max(len(toRoman(i)),args.numLength)
+    if seqType.upper() == "ROMAN":
+        for i in drange(first, increment, last + increment):
+            numLength = max(len(toRoman(i)),numLength)
     #for non roman we can use the maxNumLength function.
     else:      
-        args.numLength = maxNumLength(args.first,args.increment,args.last)
-    return args
+        numLength = maxNumLength(first,increment,last)
+    return numLength
    
             
 ##
@@ -372,6 +372,7 @@ def fromRoman(s):
             index += len(numeral)
     return result
 
+
 ##
 ## converts a int to a roman numeral
 ## http://www.diveintopython.net/unit_testing/stage_2.html
@@ -383,6 +384,7 @@ def toRoman(n):
             result += numeral
             n -= integer
     return result
+
 
 ##
 ## Prints a Sequence of numbers based on defined args
@@ -397,7 +399,7 @@ def printNumSeq(args):
         try: 
             i = next(iter)
             while True:
-                sys.stdout.write(charfill(str(toRoman(i)),args.numLength,args.pad))
+                sys.stdout.write(toRoman(i).rjust(args.numLength, args.pad))
                 i = next(iter)
                 sys.stdout.write(args.separator)
         except StopIteration:
@@ -409,7 +411,7 @@ def printNumSeq(args):
         try: 
             i = next(iter)
             while True:
-                sys.stdout.write(charfill(str(toRoman(i).lower()),args.numLength,args.pad))
+                sys.stdout.write(toRoman(i).lower().rjust(args.numLength, args.pad))
                 i = next(iter)
                 sys.stdout.write(args.separator)
         except StopIteration:
@@ -441,7 +443,7 @@ def printNumSeq(args):
 
 
 ##
-## Prints contents of a file to stdout inserting line numbering
+## Prints contents of a file to stdout, inserting line numbering
 ##
 def printFromFile(args):  
     filename = args.file 
@@ -457,7 +459,7 @@ def printFromFile(args):
         #print in uppercase roman numerals.
         if args.seqType == 'ROMAN':
             for lineNum in drange(args.first, args.increment, args.last+args.increment):
-                number = charfill(str(toRoman(lineNum)),args.numLength,args.pad)
+                number = toRoman(lineNum).rjust(args.numLength, args.pad)
                 buffer = file.readline()
                 sys.stdout.write(args.separator.join((number,buffer)))
             return
@@ -465,7 +467,7 @@ def printFromFile(args):
         #Print in lowercase roman numerals
         if args.seqType == 'roman':
             for lineNum in drange(args.first, args.increment, args.last+args.increment):
-                number = charfill(str(toRoman(lineNum).lower()),args.numLength,args.pad)
+                number = toRoman(lineNum).lower().rjust(args.numLength, args.pad)
                 buffer = file.readline()
                 sys.stdout.write(args.separator.join((number,buffer)))
             return
@@ -485,6 +487,9 @@ def printFromFile(args):
                 buffer = file.readline()
                 sys.stdout.write(args.separator.join((number,buffer)))
     #file.close() automaticaly called by using with
+    
+    
+    
 ##
 ## Prints a sequence of letters
 ##

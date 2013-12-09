@@ -46,6 +46,9 @@ Fixed bug where -w was used while format word "alpha" was being used attempted t
 moved printing of alpha sequences into their own function and renamed printseq to printNumSeq
 moved the number sequence width logic out of printNumSeq as it is also used in the printFromFile.
  
+changed roman sequences to use build in .rjust() function rather then my charfill as it is unnessesary with out negatives.
+Changed getMaxSeqLength to take multiple arguments rather then passing the whole Namespace object, it now returns the max length.
+Cleaned up code for better consistency.
 
 Test Results:
 start of full app test
