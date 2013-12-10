@@ -511,16 +511,6 @@ def printAlphaSeq(args):
     except StopIteration:
         print()     
         
-##
-## returns the number of text lines in a file.
-## Throws FileNotFoundError if the file is not present.
-def numberOfLines(filename):   
-    with open(filename, 'r') as file:
-        numberOfLines = 0
-        for lines in file:
-            numberOfLines += 1
-    return numberOfLines
-
 
 if __name__ == "__main__":
      main()
