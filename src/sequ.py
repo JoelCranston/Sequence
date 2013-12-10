@@ -30,7 +30,7 @@ def main():
     if args.separator is not DEFAULT_SEPARATOR:       
         args.separator = processSeparator(args.separator)
     else:
-        if args.file is not None:
+        if args.file is True:
             args.separator = WORD_SEPARATOR
             
     if args.words is True:
@@ -44,19 +44,15 @@ def main():
             args.pad = DEFAULT_PAD 
     else:
         args.equalWidth = True 
-        
-    if args.equalWidth is True:
-        args.numLength = getMaxSequenceLength(args.first, args.increment, args.last, args.seqType)
-    else:
-        args.numLength = 1
     
-    if args.file is None:
+    if args.file is False:
         if args.seqType.upper() == "ALPHA":
             printAlphaSeq(args)
         else:
             printNumSeq(args) 
     else:
-        printFromFile(args)
+        printFromStdin(args)
+        #printFromFile(args)
     return 1 
 
 
@@ -74,7 +70,7 @@ def parseArgs():
     parser.add_argument('-W','--words', dest='words', action='store_true', help='Output the sequence as single space separated line')
     parser.add_argument('-p','--pad', dest='pad', metavar='PAD', help='equalize width by padding with leading PAD char')
     parser.add_argument('-P','--pad-spaces', dest='pad', action='store_const', const=' ', help='equalize width by padding with leading spaces')
-    parser.add_argument('-n','--number_lines', dest='file', help='Reads from a file inserting line numbers')
+    parser.add_argument('-n','--number_lines', dest='file', action='store_true',help='Reads from a file inserting line numbers')
     preArgs=parser.parse_known_args()   
     #print('DEBUG-',preArgs)
     formatType = preArgs[0].seqType
@@ -84,18 +80,18 @@ def parseArgs():
     #if a file was specified then use the first limit arg rather then the last.
     if formatType is None:
         try:
-            if preArgs[0].file is None:
+            if preArgs[0].file is False:
                 formatType = getType(limitArgs[-1])
             else:
                 formatType = getType(limitArgs[0])
             preArgs[0].seqType = formatType
         except ValueError:
-            parser.error('[%s] is not a valid ending value' % limitArgs[-1])
+            parser.error('[%s] is not a valid value' % limitArgs[-1])
         except:
             #If there was not any limit argumnts provided.
             parser.error('a valid limit argument is required if [-F | --format-word] is not provided') 
     #can not accept alpha when numbering a file, as it could have more then 26 lines.        
-    if formatType.upper() == 'ALPHA' and preArgs[0].file is not None:
+    if formatType.upper() == 'ALPHA' and preArgs[0].file is True:
         parser.error('format word [alpha | ALPHA] is incompatible with [-n | --number_lines]')
     #The positional arguments need to know what types they should accept.
     parser.set_defaults(first='1')
@@ -120,10 +116,10 @@ def parseArgs():
     #print('Debug-types-', limitType, incType)     
     parser.add_argument('first', nargs='?', type=argumentTypes[limitType], help='starting value')
     parser.add_argument('increment', nargs='?', type=argumentTypes[incType], default='1', help='increment')
-    if preArgs[0].file is None:
+    if preArgs[0].file is False:
         parser.add_argument('last', type=argumentTypes[limitType], help='ending value')
     else:
-        preArgs[0].last = None
+        preArgs[0].last = 1
     args=parser.parse_args(args=limitArgs,namespace=preArgs[0])
     args.parser = parser
     #print('DEBUG-Final Args-',args)
@@ -391,6 +387,11 @@ def toRoman(n):
 ##
 def printNumSeq(args):
             
+    if args.equalWidth is True:
+        args.numLength = getMaxSequenceLength(args.first, args.increment, args.last, args.seqType)
+    else:
+        args.numLength = 1        
+            
     #Create the sequence generator
     iter = drange(args.first, args.increment, args.last + args.increment)
     
@@ -441,55 +442,61 @@ def printNumSeq(args):
         except StopIteration:
             print()
 
-
 ##
-## Prints contents of a file to stdout, inserting line numbering
+## filters input from stdin adding line numbers.
 ##
-def printFromFile(args):  
-    filename = args.file 
-    #Try to open the file and read the number of lines
-    try:
-        args.last = numberOfLines(filename)*args.increment
-    except:
-        args.parser.error('The file [%s] can not be opened' % filename) 
+def printFromStdin(args):
+    #copy the input to a list 
+    file = readFileToList(sys.stdin)
+    args.last = args.first + len(file)*args.increment 
     
-    #we can assume file is ok becase we already opened it to get number of lines.
-    with open(filename, 'r') as file:        
+    if args.equalWidth is True:
+        args.numLength = getMaxSequenceLength(args.first, args.increment, args.last, args.seqType)
+    else:
+        args.numLength = 1
+        
+    iter = drange(args.first, args.increment, args.last+args.increment)
+    #print in uppercase roman numerals.
+    if args.seqType == 'ROMAN':
+        for line in file:
+            number = toRoman(next(iter)).rjust(args.numLength, args.pad)
+            sys.stdout.write(args.separator.join((number,line)))
+        return
 
-        #print in uppercase roman numerals.
-        if args.seqType == 'ROMAN':
-            for lineNum in drange(args.first, args.increment, args.last+args.increment):
-                number = toRoman(lineNum).rjust(args.numLength, args.pad)
-                buffer = file.readline()
-                sys.stdout.write(args.separator.join((number,buffer)))
-            return
+    #Print in lowercase roman numerals
+    if args.seqType == 'roman':
+        for line in file:
+            number = toRoman(next(iter)).lower().rjust(args.numLength, args.pad)
+            sys.stdout.write(args.separator.join((number,line)))
+        return
 
-        #Print in lowercase roman numerals
-        if args.seqType == 'roman':
-            for lineNum in drange(args.first, args.increment, args.last+args.increment):
-                number = toRoman(lineNum).lower().rjust(args.numLength, args.pad)
-                buffer = file.readline()
-                sys.stdout.write(args.separator.join((number,buffer)))
-            return
+    #Prints integers and floats without format string
+    #if no format string is specified use the default precision handling 
+    if args.format is None:   
+        for line in file:
+            number = charfill(str(next(iter)),args.numLength,args.pad)
+            sys.stdout.write(args.separator.join((number,line)))
 
-        #Prints integers and floats without format string
-        #if no format string is specified use the default precision handling 
-        if args.format is None:   
-            for lineNum in drange(args.first, args.increment, args.last+args.increment):
-                number = charfill(str(lineNum),args.numLength,args.pad)
-                buffer = file.readline()
-                sys.stdout.write(args.separator.join((number,buffer)))
-
-        #Prints integers and floats with format string
-        else:  
-            for lineNum in drange(args.first, args.increment, args.last+args.increment):
-                number = (args.format % lineNum)
-                buffer = file.readline()
-                sys.stdout.write(args.separator.join((number,buffer)))
-    #file.close() automaticaly called by using with
+    #Prints integers and floats with format string
+    else:  
+        for line in file:
+            number = (args.format % next(iter))
+            sys.stdout.write(args.separator.join((number,line)))
+   
     
-    
-    
+##
+## Copies a file to a list
+##
+def readFileToList(file):
+    lineBuffer = file.readline()
+    fileBuffer = []
+    while lineBuffer != '':
+        fileBuffer.append(lineBuffer)
+        lineBuffer = file.readline()
+    return fileBuffer
+       
+        
+ 
 ##
 ## Prints a sequence of letters
 ##
